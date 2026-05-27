@@ -1,0 +1,958 @@
+import random
+
+EVENTOS = {
+    "Revolução Francesa": [
+        "Estamos numa cidade europeia onde o pão sumiu das prateleiras e as pessoas estão furiosas.",
+        "Ouço gritos nas ruas: 'Liberdade, Igualdade, Fraternidade!' Nunca vi tanta gente assim reunida.",
+        "A guilhotina está sendo usada como instrumento de 'justiça popular' nas praças públicas.",
+        "O rei e a rainha foram presos. A monarquia parece estar com os dias contados.",
+        "Documentos históricos estão sendo redigidos às pressas — falam em direitos do homem e do cidadão.",
+        "Nobres estão fugindo para outros países com o que conseguem carregar.",
+        "A Bastilha foi tomada por uma multidão indignada. Era um símbolo de opressão.",
+        "Estamos no final do século XVIII e a França está pegando fogo — literalmente e figurativamente.",
+        "Um jovem general começa a ganhar destaque nas guerras que se espalharam pela Europa.",
+        "As igrejas estão sendo invadidas e a religião está sendo desafiada abertamente pelo Estado.",
+        "As mulheres marcham para Versalhes exigindo comida. O palácio parece outro mundo comparado às ruas.",
+        "Ouço falar num sistema de terror institucionalizado — execuções em massa como política de governo.",
+        "Estamentos sociais estão sendo abolidos no papel. Na prática, o caos é a nova ordem.",
+        "O calendário foi mudado — estão tentando apagar até a forma de contar o tempo.",
+        "Paris está dividida entre jacobinos, girondinos e moderados. Ninguém concorda com ninguém.",
+        "Uma constituição está sendo escrita e reescrita enquanto o regime muda de mãos.",
+        "A Assembleia Nacional acaba de surgir. Os deputados do Terceiro Estado se recusaram a sair.",
+        "Há filas imensas em frente às padarias. A fome é real e a raiva aumenta a cada dia.",
+        "Estão queimando registros de propriedade e títulos de nobreza nas fogueiras das vilas.",
+        "Um homem me conta que seu avô era servo. Hoje ele vota e carrega uma espada.",
+        "O Comitê de Segurança Pública condena à morte com uma velocidade que assusta.",
+        "Robespierre discursa com fervor. Dizem que ele mesmo acabará guillotinado.",
+        "A Declaração dos Direitos do Homem foi escrita aqui. Vai inspirar revoluções por séculos.",
+        "Vínculos feudais foram abolidos numa única noite de agosto. Os senhores choraram.",
+        "Estamos num dos momentos mais radicais da história política ocidental.",
+        "A Igreja Católica perdeu suas propriedades para o Estado. Isso nunca tinha acontecido antes.",
+        "Soldados da República cantam uma música nova que virou hino de guerra — a Marselhesa.",
+        "Danton, Marat, Robespierre — nomes que definem este momento turbulento.",
+        "A República foi proclamada. Nunca mais um rei na França, juram alguns.",
+        "A Convenção Nacional debate se o rei deve morrer. A votação é por margem pequeníssima.",
+        "Estamos numa época em que palavras como 'cidadão' e 'tirania' têm peso de vida e morte.",
+        "Os emigrés que fugiram treinavam exércitos do lado de fora para invadir e restaurar a monarquia.",
+        "O terror foi justificado como necessidade. A história vai julgar de outro jeito.",
+        "Tribunais revolucionários condenam em horas quem levaria meses em julgamentos normais.",
+        "Estamos no período entre 1789 e 1799, uma década que condensou séculos de mudança.",
+        "A bandeira tricolor substituiu os símbolos reais. As cores dizem muito sobre quem chegou ao poder.",
+        "Crianças aprendem nova história nas escolas — a monarquia virou crime, não tradição.",
+        "Vejo o cadafalso na praça pública e prefiro não me aproximar.",
+        "Os jacobinos controlam Paris mas não controlam a França inteira. A guerra civil ameaça.",
+        "Estamos no epicentro de uma transformação política que vai redesenhar a Europa."
+    ],
+    "Revolução Industrial": [
+        "O ar está pesado de fumaça e o céu nunca fica completamente azul aqui.",
+        "Crianças trabalham nas fábricas do amanhecer ao anoitecer. Ninguém acha isso estranho.",
+        "Ouço o barulho constante de máquinas a vapor. É ensurdecedor e nunca para.",
+        "Estamos no norte da Inglaterra e as cidades estão crescendo a uma velocidade assustadora.",
+        "Rios que antes eram limpos estão negros de resíduos industriais.",
+        "Trabalhadores vivem amontoados em cortiços sem saneamento básico.",
+        "A locomotiva passou aqui pela primeira vez semana passada. Todo mundo foi ver.",
+        "Artesãos estão perdendo o emprego para as tecelagens mecânicas. Alguns estão destruindo máquinas.",
+        "O carvão é o combustível do mundo agora. As minas nunca param.",
+        "Estamos no século XIX e o mundo nunca mudou tão rápido em tão pouco tempo.",
+        "Há discussões acaloradas sobre jornadas de trabalho de 16 horas. 'Normal', dizem os patrões.",
+        "Manchester dobrou de tamanho em vinte anos. As pessoas vêm do campo em busca de trabalho.",
+        "Vi um homem sendo substituído por uma máquina hoje. Ele ficou olhando sem entender o que fazer.",
+        "Os sindicatos estão começando a se organizar, mas é perigoso se associar a eles.",
+        "Estradas de ferro rasgam a paisagem em todas as direções. O país está encolhendo.",
+        "A burguesia industrial está ficando absurdamente rica enquanto os operários mal sobrevivem.",
+        "Ouço falar de um texto chamado 'Manifesto' — dizem que está circulando entre os trabalhadores.",
+        "As janelas das casas ficam cobertas de fuligem poucos dias depois de limpas.",
+        "Uma nova classe social está nascendo — o proletariado urbano, arrancado das suas origens rurais.",
+        "O tempo passou a ser medido pelo apito da fábrica. Não pelo sol nem pelas estações.",
+        "James Watt aperfeiçoou a máquina a vapor e o mundo nunca mais foi o mesmo.",
+        "Crianças de seis anos trabalham em minas de carvão. Seus corpos cabem nos túneis estreitos.",
+        "A esperança de vida dos trabalhadores industriais é absurdamente menor do que a dos ricos.",
+        "George Stephenson construiu a primeira ferrovia comercial. Agora há linhas em toda parte.",
+        "Estamos entre 1760 e 1840, o período que redefiniu o que significa produzir e trabalhar.",
+        "O movimento ludita quebrou máquinas. Foram presos ou enforcados por isso.",
+        "Os lucros das fábricas financiam palácios e bibliotecas. Os trabalhadores não entram nesses lugares.",
+        "Engels documenta as condições de vida dos trabalhadores de Manchester. É de estarrecer.",
+        "A fiação mecânica substituiu o trabalho manual de milhares de tecelões numa geração.",
+        "Exportações britânicas inundam o mundo. Nenhuma manufatura local resiste ao preço das fábricas.",
+        "Estamos no país que inventou o capitalismo industrial moderno e cobra o preço por isso.",
+        "Os donos das fábricas moram longe do cheiro de suas próprias chaminés.",
+        "Uma lei tentou limitar o trabalho infantil a doze horas. Os industriais protestaram.",
+        "O telégrafo elétrico chegou. As notícias viajam mais rápido do que qualquer trem.",
+        "Mulheres e crianças ganham menos que homens pelo mesmo trabalho. Isso é considerado lógico.",
+        "As cidades não têm infraestrutura para a multidão que chegou do campo. O caos é visível.",
+        "Estamos numa época onde a eficiência virou o único valor que importa.",
+        "Robert Owen tentou criar uma fábrica humana. Seus colegas industriais o chamaram de louco.",
+        "A linha de montagem ainda não existe, mas a divisão do trabalho já desumaniza tudo.",
+        "Estamos no período que criou o mundo moderno às custas de uma geração inteira de trabalhadores."
+    ],
+    "Protestos de 2013 no Brasil": [
+        "Estamos numa avenida movimentada de São Paulo. O tráfego foi completamente bloqueado.",
+        "Começou por vinte centavos no ônibus. Mas a multidão fala de muito mais do que isso agora.",
+        "Ouço gritos de 'não é só pelos 20 centavos!' em todas as direções.",
+        "Há pessoas com bandeiras do Brasil pintadas no rosto que nunca foram a um protesto antes.",
+        "A televisão está tentando entender o que está acontecendo. Parece que o Brasil também não sabe.",
+        "Vi um cartaz escrito à mão: 'saúde, educação, transporte — onde está o dinheiro?'",
+        "O Movimento Passe Livre convocou, mas o que veio foi bem maior do que eles esperavam.",
+        "São Paulo, Rio, Belo Horizonte, Brasília — todo lugar ao mesmo tempo.",
+        "Há fumaça de bombas de gás lacrimogênio misturada com a fumaça de pneus queimados.",
+        "A Copa do Mundo está sendo criticada nos cartazes. 'Não vai ter Copa!' gritam alguns.",
+        "Estamos em junho e o calor está forte. As pessoas continuam saindo mesmo assim.",
+        "Repórteres estão sendo agredidos — por policiais e por manifestantes. Ninguém sabe de quem confiar.",
+        "Um cartaz pergunta: 'quanto custa um político?' Outro responde com o número do salário deles.",
+        "O governo decidiu recuar na tarifa do transporte. Mas a multidão não foi para casa.",
+        "Vi um homem vestido de super-herói com uma faixa contra a PEC 37. Poucos sabem o que é isso.",
+        "Redes sociais estão convocando e descentralizando ao mesmo tempo. Não há um líder visível.",
+        "O Congresso Nacional em Brasília foi escalado pelo teto. As câmeras filmaram tudo.",
+        "Estamos no Brasil de 2013, entre a euforia do pré-Copa e uma raiva que veio de longe.",
+        "A sensação é de que algo mudou, mas ninguém ainda sabe o quê ou para onde vai.",
+        "Ouço um grupo cantando o hino com palavras diferentes. Não é agressão — é ironia amarga.",
+        "Um million pessoas nas ruas ao mesmo tempo. Isso não acontecia desde o 'Fora Collor'.",
+        "A Dilma apareceu na televisão para falar com o país. O país seguiu para as ruas mesmo assim.",
+        "Estamos numa cidade onde a violência policial virou combustível para mais protestos.",
+        "Cartazes contra a corrupção aparecem ao lado de cartazes contra o aumento do transporte.",
+        "A mídia tradicional primeiro criminalizou, depois aderiu quando viu o tamanho da coisa.",
+        "Estudantes, trabalhadores, classe média, sem-teto — a multidão não era homogênea.",
+        "O vinagre foi proibido de ser carregado pela polícia. Virou símbolo de resistência.",
+        "Manifestantes foram presos por portar vinagre. Em 2013, no Brasil.",
+        "A sensação de poder coletivo era real. Quanto tempo ela vai durar, ninguém sabe.",
+        "Estamos num momento que vai ser interpretado de formas opostas por anos.",
+        "Quem estava lá sabe que era diferente de tudo que tinha vindo antes.",
+        "O Brasil mostrou que tem voz. O que fazer com essa voz ainda está em aberto.",
+        "Até 2014, a memória das jornadas vai pesar em cada decisão política do país.",
+        "As redes sociais fizeram algo impossível virar realidade em dias.",
+        "Estamos numa cidade brasileira em junho de 2013 — e o país está acordado.",
+        "Há um cartaz que diz 'nenhum partido me representa'. Isso resume muita coisa.",
+        "A juventude que saiu às ruas ainda não sabia o que viria nos anos seguintes.",
+        "Estamos num ponto de inflexão da política brasileira contemporânea.",
+        "O barulho das panelas batidas nas janelas mistura com o gás lacrimogênio nas ruas.",
+        "Estamos num dos maiores movimentos de protesto da história recente do Brasil."
+    ],
+    "Ataque de 11 de Setembro": [
+        "Estamos em Nova York. O céu estava limpo e azul quando tudo começou.",
+        "Ouvi uma explosão que sacudiu os vidros. Depois outra. As pessoas saem correndo para a rua.",
+        "A fumaça sobe das Torres Gêmeas e está visível de qualquer ponto da cidade.",
+        "Ninguém entende o que está acontecendo. Os rádios estão todos ligados ao mesmo tempo.",
+        "Um avião commercial foi usado como arma. Isso não é um acidente.",
+        "As ligações estão congestionadas. Ninguém consegue falar com ninguém.",
+        "Vi pessoas pulando das torres. Não quero descrever mais do que isso.",
+        "A primeira torre desmorona. Um silêncio estranho, depois gritos de todo lado.",
+        "Nuvens de poeira cinza tomam conta das ruas como uma avalanche.",
+        "Estamos em setembro de 2001 e o mundo definitivamente vai mudar depois de hoje.",
+        "O Pentágono também foi atingido. Isso é maior do que qualquer coisa que já vi.",
+        "O presidente americano está sendo informado em voz baixa enquanto visita uma escola.",
+        "Os aeroportos foram fechados. Não vai sair nem entrar nenhum avião nos EUA hoje.",
+        "Ouço falar de um quarto avião que caiu num campo na Pensilvânia. Os passageiros reagiram.",
+        "Os bombeiros sobem pelas escadas enquanto todos descem. Muitos não vão voltar.",
+        "Estações de bombeiro estão vazias. Todos foram chamados para o mesmo lugar.",
+        "Na televisão, repetem as imagens. As pessoas não conseguem parar de assistir.",
+        "Um homem está em pé na poeira segurando uma foto. Procura alguém.",
+        "Fala-se em Al-Qaeda e em Osama Bin Laden nos rádios. Esses nomes agora são universais.",
+        "Estamos no coração financeiro e simbólico dos Estados Unidos. E ele acaba de ser atacado.",
+        "A segunda torre caiu. Quem assistiu não vai esquecer esse som.",
+        "Socorristas chegam de toda parte. A cena é de guerra numa cidade que nunca esperou guerra.",
+        "George W. Bush faz um discurso prometendo resposta. O mundo vai mudar a partir de hoje.",
+        "Dezenas de países ligam para oferecer solidariedade. Até rivais históricos.",
+        "Estamos num dia que divide o século XXI em antes e depois.",
+        "Polícias, bombeiros, paramédicos — todos correndo para o mesmo ponto de caos.",
+        "Há uma fila de gente querendo dar sangue. As doações foram além da capacidade dos hospitais.",
+        "A bolsa de valores fechou. Wall Street silenciou pela primeira vez em décadas.",
+        "Nomes nas Torres Gêmeas vinham de 90 países diferentes. Isso era o World Trade Center.",
+        "A guerra ao terror que começa hoje vai durar décadas. Ninguém sabe disso ainda.",
+        "Estamos num ataque coordenado com quatro aviões. Três acertaram. Um foi abatido pelos passageiros.",
+        "As torres levaram anos para ser construídas. Caíram em menos de duas horas.",
+        "Crianças nas escolas foram mandadas para casa sem os pais entenderem o que dizer.",
+        "O metro de Nova York parou. A cidade parou. O mundo parou por um momento.",
+        "Estamos num momento que vai redefinir segurança, liberdade e política global.",
+        "Histórias de heroísmo e sacrifício vão emergir nos dias seguintes.",
+        "Quase três mil pessoas morreram nesse dia. A maioria nem sabia que estava em risco ao acordar.",
+        "Os rastros de fumaça no céu azul ficaram visíveis por horas.",
+        "Estamos em 11 de setembro de 2001. E o mundo é outro agora.",
+        "A América foi atacada em casa pela primeira vez em décadas. Isso muda tudo."
+    ],
+    "Césio-137 em Goiânia": [
+        "Estamos numa cidade do interior do Brasil. Ninguém aqui tinha ouvido falar de radiação antes.",
+        "Dois homens encontraram um aparelho abandonado numa clínica desativada e o levaram para casa.",
+        "O pó brilhante azul parecia bonito. As crianças brincaram com ele.",
+        "Um ferro-velho comprou o material sem saber o que era. Logo ele e a família adoeceram.",
+        "As pessoas começaram a ter vômitos, queda de cabelo, manchas na pele — ninguém entendia.",
+        "Estamos em 1987, em Goiânia. A tragédia estava acontecendo enquanto a cidade vivia normalmente.",
+        "O médico que diagnosticou o problema quase não foi ouvido a tempo.",
+        "Centenas de pessoas foram expostas sem saber. Muitos nunca saberiam por quê ficaram doentes.",
+        "O césio-137 é invisível, inodoro e silencioso. O pior tipo de perigo.",
+        "A CNEN chegou e isolou bairros inteiros. As pessoas não entendiam por que tinham que sair.",
+        "Quatro pessoas morreram diretamente. O número de afetados foi muito maior.",
+        "Casas foram demolidas. Roupas enterradas. A contaminação tinha chegado a dezenas de endereços.",
+        "O material vinha de um equipamento de radioterapia — um aparelho de saúde virou arma acidental.",
+        "A imprensa internacional cobriu o acidente. Para muitos brasileiros, foi a primeira vez ouvindo sobre radiação.",
+        "Ambulâncias com equipamentos de detecção percorreram a cidade por semanas.",
+        "O lixão da cidade precisou ser remapeado. A contaminação tinha chegado longe.",
+        "Uma criança de seis anos que brincou com o pó não sobreviveu.",
+        "Goiânia se tornou referência global em como não gerenciar resíduos radioativos.",
+        "Foi o maior acidente radiológico do hemisfério ocidental e aconteceu numa cidade comum, no Brasil.",
+        "Estamos num lugar onde o brilho de algo desconhecido causou uma catástrofe silenciosa.",
+        "O aparelho de radioterapia havia sido deixado para trás quando a clínica fechou. Esquecido.",
+        "Devair Ferreira vendeu o equipamento como sucata. Não sabia que estava condenando sua família.",
+        "A contaminação se espalhou por roupas, mãos, calçados — como uma sombra invisível.",
+        "Técnicos em proteção radiológica vieram de todo o Brasil. Nunca tinham visto nada assim.",
+        "Estamos num acidente que poderia ter sido evitado com protocolos básicos de descarte.",
+        "O césio contaminou o solo, as paredes, os móveis. Tudo precisou ser destruído.",
+        "Moradores vizinhos protestaram contra depósito de resíduos radioativos no bairro. Com razão.",
+        "O acidente expôs a falta de fiscalização de equipamentos médicos radioativos no Brasil.",
+        "Estamos em setembro de 1987, numa cidade de 700 mil habitantes às escuras sobre o perigo.",
+        "Os sintomas da síndrome de irradiação aguda foram confundidos com doença comum por dias.",
+        "Hospitais da cidade não sabiam como tratar os pacientes. Nunca tinham visto isso antes.",
+        "A notícia só chegou à imprensa quando o médico Roberto Melo bateu nas portas certas.",
+        "Todo o material contaminado foi enterrado num depósito especial fora da cidade.",
+        "Estamos num lugar onde a modernidade tecnológica chegou antes da responsabilidade de usá-la.",
+        "A AIEA — Agência Internacional de Energia Atômica — produziu um relatório detalhado sobre o caso.",
+        "O caso Goiânia virou estudo obrigatório em cursos de gestão de emergências nucleares no mundo.",
+        "Estamos numa cidade que ficou estigmatizada por anos depois do acidente.",
+        "A irradiação de Goiânia aconteceu dois anos antes de Chernobyl entrar no vocabulário mundial.",
+        "Devair Ferreira sobreviveu. Sua esposa e filha não tiveram a mesma sorte.",
+        "Estamos no epicentro de um acidente que expôs falhas no sistema de saúde e fiscalização do Brasil."
+    ],
+    "Roma Antiga": [
+        "Estamos numa cidade que se autointitula o centro do mundo. E talvez seja mesmo.",
+        "O Coliseu está lotado. Hoje tem gladiadores. A multidão veio de toda parte.",
+        "Ouço latim em todos os dialetos imagináveis — comerciantes, soldados, senadores.",
+        "As estradas são perfeitamente retas e pavimentadas, cortando colinas e rios sem desvio.",
+        "O Senado está em sessão. Dizem que algo grande está sendo decidido lá dentro.",
+        "Um general voltou vitorioso das Gálias. A multidão joga flores no caminho da procissão.",
+        "Os escravos constroem tudo o que vejo. São invisíveis para os cidadãos livres.",
+        "O aqueduto traz água fresca do campo para a cidade. É uma obra extraordinária.",
+        "Estamos entre o primeiro século antes e depois de Cristo. O Império está no auge.",
+        "Os templos são enormes. Cada deus tem o seu. A cidade é um mapa da religiosidade romana.",
+        "Mercadores de três continentes vendem suas mercadorias no mesmo fórum.",
+        "O imperador acabou de promulgar uma nova lei. Ela vale para todo o mundo conhecido.",
+        "Vi patrícios e plebeus discutindo nas ruas. A política aqui é um esporte de contato.",
+        "Há termas por toda a cidade. Banho e política se misturam nos mesmos ambientes.",
+        "Os legionários treinam com disciplina assustadora. Cada gesto é padronizado.",
+        "Um homem me conta a história de Rômulo e Remo como se fosse algo que aconteceu ontem.",
+        "O latim que ouço aqui vai se transformar em dezenas de línguas nos próximos séculos.",
+        "A lei romana regula tudo — contratos, heranças, crimes, propriedades.",
+        "Leões e outros animais estão sendo trazidos da África para os jogos. É considerado entretenimento.",
+        "A Pax Romana significa que há paz nas fronteiras. Dentro delas, a vida ferve.",
+        "Júlio César foi assassinado há poucas gerações. Ainda se fala nisso nas tabernas.",
+        "O Panteão foi construído para todos os deuses. A engenharia aqui é absurda.",
+        "Há um sistema de esgoto subterrâneo chamado Cloaca Máxima. Funciona há séculos.",
+        "Gladiadores têm fãs como artistas. Seus nomes são escritos nas paredes.",
+        "Estamos numa cidade de um milhão de pessoas — a maior do mundo neste momento.",
+        "O Fórum Romano é onde a política acontece, os negócios se fecham e as fofocas circulam.",
+        "Escravos educados ensinam os filhos dos ricos. A ironia não incomoda ninguém.",
+        "As províncias enviam impostos e Roma envia leis, soldados e estradas.",
+        "Estamos num império que vai durar séculos, mas que já carrega as sementes de seu colapso.",
+        "O vinho é misturado com água. Beber vinho puro é considerado barbaridade.",
+        "Mulheres ricas têm mais poder do que qualquer lei admite oficialmente.",
+        "O Circo Máximo comporta 250 mil pessoas. As corridas de bigas param a cidade.",
+        "Vestais guardam o fogo sagrado de Roma. São intocáveis e poderosas à sua maneira.",
+        "Estamos num lugar onde a República virou Império e ninguém sabe bem quando isso aconteceu.",
+        "Augusto diz que restaurou a República. Na prática, concentrou todo o poder.",
+        "Os números romanos estão em todo lugar — nas estradas, nos monumentos, nos documentos.",
+        "Há uma biblioteca pública com rolos de papiro cobrindo toda a filosofia grega.",
+        "O exército romano é o mais disciplinado e lethal do mundo neste momento.",
+        "Estamos numa civilização que vai moldar a lei, a língua e a arquitetura do ocidente por milênios.",
+        "Roma queimou durante Nero. Reconstruiu ainda mais grandiosa. Isso diz muito sobre ela."
+    ],
+    "Batalha dos 300 Espartanos": [
+        "Estamos numa passagem estreita entre montanhas e o mar, na Grécia. Chama-se Termópilas.",
+        "Um exército persa imenso está chegando. Dizem que são centenas de milhares.",
+        "Trezentos guerreiros espartanos decidiram segurar essa passagem. A matemática não os preocupa.",
+        "O rei Leônidas foi avisado de que as flechas persas escureceriam o sol. Ele respondeu que lutariam na sombra.",
+        "A formação em falange espartana é assustadora. Escudos encaixados como uma parede de bronze.",
+        "Estamos no século V antes de Cristo. O destino da Grécia está sendo decidido aqui.",
+        "A vantagem do terreno é clara — a passagem é estreita demais para o exército persa usar seus números.",
+        "Xerxes observa de cima e não consegue entender como tão poucos resistem a tanto.",
+        "Os espartanos foram treinados desde crianças para isso. Não conhecem o conceito de recuar.",
+        "Um traidor mostrou uma passagem alternativa para os persas. Isso muda tudo.",
+        "Os 300 sabem que vão morrer, mas a missão era ganhar tempo para que a Grécia se organize.",
+        "A batalha durou três dias. Cada dia os persas deixaram milhares de mortos.",
+        "Há também tebanos e outros aliados gregos aqui, mas os espartanos dominam o espírito do lugar.",
+        "Depois desta batalha, os persas ainda ganharão Atenas — mas perderão a guerra.",
+        "O mar ao lado está calmo. A violência aqui está concentrada nessa faixa de terra.",
+        "Vi um espartano rindo antes da batalha. Disse que hoje seria um bom dia para morrer bem.",
+        "Os imortais persas — os mais temidos guerreiros do império — foram repelidos várias vezes.",
+        "Estamos num dos momentos mais narrados da história militar. E está acontecendo agora.",
+        "Leônidas mandou os outros aliados embora antes do fim. Os 300 ficaram por escolha.",
+        "Daqui a séculos, esse lugar ainda vai ser lembrado. Eu sinto isso no ar.",
+        "Espartanos não se entregam. Isso não é bravura performática — é uma forma de ser criada desde o berço.",
+        "Heródoto vai escrever sobre isso. Mesmo que os 300 morram, a história vai sobreviver.",
+        "Estamos em 480 a.C. A Grécia clássica está em jogo nesse desfiladeiro.",
+        "O código espartano diz: volte com o escudo ou sobre ele. Ninguém voltará com o escudo.",
+        "A resistência aqui deu tempo para a frota grega se preparar em Salamina.",
+        "Xerxes ofereceu a Leônidas honras se se rendesse. A resposta foi curta e grossa.",
+        "Os espartanos comem sua última refeição juntos antes do combate final.",
+        "O número real era maior — havia mais de mil gregos além dos 300. Mas os 300 ficaram até o fim.",
+        "Estamos num lugar onde a derrota tática virou vitória moral para a eternidade.",
+        "As mulheres espartanas mandavam seus filhos à guerra com as palavras: volte com o escudo ou sobre ele.",
+        "A agoge — o treinamento espartano — começava aos sete anos. Esses homens foram feitos para isso.",
+        "Estamos num desfiladeiro onde o vento traz o cheiro de sangue e o som de metal.",
+        "Efialtes, o traidor, vai viver com a vergonha para sempre. Já os 300, com a glória.",
+        "A batalha das Termópilas aconteceu ao mesmo tempo que a batalha naval do Artemísio.",
+        "Estamos num momento que define o que é coragem no imaginário ocidental.",
+        "Os gregos que sobreviveram vão contar essa história aos filhos e netos.",
+        "Persia controlava o maior império do mundo neste momento. E estava sendo segurada por 300.",
+        "Estamos no tipo de batalha que poetas vão cantar por milênios.",
+        "O sacrifício aqui não foi em vão — a Grécia sobreviveu e a democracia também.",
+        "Neste lugar, a ideia de que poucos podem segurar muitos entrou para a história."
+    ],
+    "As Cruzadas": [
+        "Estamos na Idade Média. Um papa acabou de pregar que Deus quer que os cristãos recuperem Jerusalém.",
+        "Vi homens de toda a Europa costurando cruzes nas suas vestes e largando família e terra para trás.",
+        "A Primeira Cruzada foi convocada pelo Papa Urbano II. O grito era: Deus o quer!",
+        "Jerusalém está nas mãos dos muçulmanos há anos. A cristandade não aceita isso.",
+        "Cavaleiros, camponeses, comerciantes — todos misturados no mesmo exército sagrado.",
+        "A jornada até a Terra Santa leva meses. Muitos morrem no caminho de fome e doença.",
+        "Constantinopla é a primeira grande parada. Os cruzados e os bizantinos não confiam um no outro.",
+        "O calor da Palestina mata mais cristãos do que as espadas sarracenas.",
+        "Estamos entre os séculos XI e XIII. Sete cruzadas ao todo serão travadas ao longo desse período.",
+        "Saladin reconquistou Jerusalém. Os cruzados precisarão de outra expedição.",
+        "Os cavaleiros templários guardam as rotas de peregrinação. São temidos e ricos.",
+        "A promessa era de indulgência — os pecados seriam perdoados por participar da guerra santa.",
+        "Vi cidades inteiras sendo saqueadas no caminho. Santo ou não, a guerra é a guerra.",
+        "As crianças também foram convocadas numa cruzada. Nenhuma chegou à Terra Santa.",
+        "Muçulmanos, cristãos e judeus disputavam esse mesmo território por razões diferentes e urgentes.",
+        "Um mercador me conta que o comércio com o Oriente cresceu com as cruzadas. A guerra tem esse lado.",
+        "A Quarta Cruzada nunca chegou a Jerusalém — saqueou Constantinopla, cidade cristã.",
+        "Os castelos cruzados pontuam o horizonte. Foram construídos para durar e muitos ainda estão de pé.",
+        "Há uma tensão constante entre fé genuína e ambição territorial. Os dois andam juntos aqui.",
+        "Estamos num período onde a guerra e a religião são a mesma coisa para quase todo mundo.",
+        "Godofredo de Bulhão foi o primeiro governante de Jerusalém cruzada. Recusou o título de rei.",
+        "A Ordem dos Hospitalários cuida dos feridos e doentes. Fé e medicina lado a lado.",
+        "Estamos em 1095, quando o papa pregou em Clermont e o mundo começou a se mover.",
+        "Judeus europeus foram massacrados no caminho para a Terra Santa. A cruzada os alcançou primeiro.",
+        "O califado abássida fragmentou-se. Isso facilitou a conquista cruzada inicial de Jerusalém.",
+        "Os estados cruzados — Outremer — são ilhas cristãs num mar muçulmano. Não vão durar.",
+        "Saladino é descrito até pelos inimigos como nobre e honrado. Isso é raro numa guerra santa.",
+        "A Terceira Cruzada juntou Ricardo Coração de Leão e o rei Filipe II. Juntos e rivais.",
+        "Estamos num período onde a Europa mandou sua melhor violência para longe de casa.",
+        "Os cruzados que chegaram a Jerusalém choraram ao ver a cidade. Depois a massacraram.",
+        "Estamos num conflito que vai durar 200 anos e deixar marcas que duram até hoje.",
+        "A palavra 'cruzada' vai adquirir significados que vão muito além dessa guerra.",
+        "Franciscanos e outros frades tentam converter muçulmanos. A espada vai na frente.",
+        "Estamos num momento em que a Europa se define também pelo que decide atacar.",
+        "Os reinos cruzados precisavam de suprimentos constantes da Europa. Eram frágeis.",
+        "A Quinta Cruzada tentou atacar o Egito para chegar a Jerusalém por outra rota.",
+        "Cruzados capturaram e perderam Damieta no Egito. Glória e fracasso em poucos anos.",
+        "Estamos numa época onde a palavra de um papa podia mover exércitos inteiros.",
+        "Os últimos estados cruzados caíram em 1291 com a queda de Acre.",
+        "Estamos numa guerra que moldou o islamismo e o cristianismo de formas que nenhum dos lados previa."
+    ],
+    "Peste Negra": [
+        "Estamos na Europa do século XIV. As pessoas estão morrendo em números que ninguém sabia serem possíveis.",
+        "Os médicos usam máscaras com bicos cheios de ervas. Ninguém sabe o que está causando isso.",
+        "Os mortos são tantos que as igrejas ficaram sem espaço. Estão sendo enterrados em valas comuns.",
+        "Vi uma cidade que tinha dez mil habitantes na semana passada. Hoje deve ter metade.",
+        "Os ratos parecem morrer antes das pessoas. Isso tem que significar alguma coisa.",
+        "Estamos em meados de 1300. A doença veio do Oriente pelos navios mercantes.",
+        "Bubões negros e roxos aparecem nas axilas e virilhas. Quem tem, raramente sobrevive.",
+        "A Igreja perdeu muito de sua autoridade. Deus não ouviu as preces de ninguém aqui.",
+        "Grupos de flagelantes percorrem as ruas se açoitando. Pensam que a culpa é dos pecados.",
+        "Judeus estão sendo culpados pela doença. Estão sendo massacrados em vários lugares.",
+        "Entre um terço e metade de toda a população da Europa vai morrer nesse período.",
+        "Ouço sinos de funeral o dia inteiro. Parei de contar.",
+        "Os sobreviventes herdaram terras, animais, objetos. A Europa ficará mais rica por uns — e em luto por décadas.",
+        "Ninguém sabe que a culpa é da bactéria Yersinia pestis transmitida por pulgas de ratos.",
+        "Aldeias inteiras foram abandonadas. Entrei numa e não havia nem um cachorro.",
+        "Mercadores genoveses trouxeram a doença da Crimeia. Chegou pela Sicília em 1347.",
+        "Os sistemas feudais estão sendo questionados. Trabalhadores sobreviventes exigem melhores condições.",
+        "Crianças são os mais vulneráveis. As famílias se desfizeram muito mais rápido do que qualquer guerra.",
+        "Há uma dança macabra pintada nas paredes das igrejas — a morte convidando todos, sem exceção.",
+        "Estamos num dos maiores eventos de mortandade da história humana. E ele está acontecendo agora.",
+        "Bocaccio escreveu sobre isso em Florença. Dez jovens fugindo da peste e contando histórias.",
+        "Médicos que se recusam a tratar doentes são comuns. Os que ficam, morrem junto.",
+        "A doença tem três formas — bubônica, pneumônica e septicêmica. As últimas duas são quase 100% fatais.",
+        "Estamos num período onde a morte é tão comum que as pessoas pararam de chorar os mortos.",
+        "O Papa Clemente VI ficou em Avignon entre fogueiras. Acreditava que o calor afastava a doença.",
+        "Navios cheios de mortos chegavam aos portos. As cidades fecharam as portas tarde demais.",
+        "Estamos na Europa de 1347-1353, o pico da mortalidade da primeira vaga.",
+        "A mão de obra escassa depois da praga empoderou os camponeses. Paradoxo da morte em massa.",
+        "O sistema feudal nunca mais foi o mesmo depois disso. A praga acelerou o fim da Idade Média.",
+        "Estamos numa época onde ninguém — nobre ou servo — está seguro.",
+        "Cidades italianas como Florença perderam 60% da população. Em alguns casos, mais.",
+        "O comércio parou. As rotas comerciais viraram rotas da morte.",
+        "Padres morriam junto aos fiéis. A Igreja foi varrida com o mesmo vigor da praga.",
+        "Estamos no evento que mais rapidamente matou mais pessoas proporcionalmente na história europeia.",
+        "Crianças órfãs vagam pelas cidades. Não há adultos suficientes para cuidar delas.",
+        "A palavra 'quarentena' nasceu aqui — quaranta giorni, quarenta dias de isolamento em Ragusa.",
+        "Estamos num momento onde o medo é o cheiro que está em todo lugar.",
+        "As pessoas que sobreviveram à praga viram um mundo completamente diferente do que nasceram.",
+        "A praga voltou em ondas ao longo do século XIV e XV. A primeira foi a pior.",
+        "Estamos num dos raros momentos onde uma única doença mudou o curso da civilização."
+    ],
+    "Segunda Guerra Mundial": [
+        "Estamos na Europa e os bombardeiros passam tão baixo que dá para ver as insígnias.",
+        "As crianças de Londres foram evacuadas para o campo. A cidade se prepara para ser atacada.",
+        "Ouvi a rádio anunciar que a Polônia foi invadida. Alguém na sala começou a chorar.",
+        "Os abrigos antiaéreos estão cheios de famílias dormindo com o que conseguiram carregar.",
+        "Há racionamento de comida, combustível e tudo mais. Cada caloria é política.",
+        "Estamos entre 1939 e 1945. O conflito abraça todos os continentes de uma forma ou de outra.",
+        "Vi soldados alemães marchando por uma capital europeia ocupada. Ninguém aplaude.",
+        "O discurso de Churchill está no rádio. Ele diz que nunca vão se render.",
+        "Campos de trabalho forçado existem. Mas o que exatamente acontece lá, poucos sabem ainda.",
+        "Um cartaz nas ruas pede que as mulheres trabalhem nas fábricas de armamentos. É necessidade.",
+        "Navios afundam no Atlântico. Os submarinos alemães são invisíveis e implacáveis.",
+        "O Japão entrou na guerra depois de Pearl Harbor. Agora os EUA não podem ficar de fora.",
+        "Há uma resistência organizada em cada país ocupado. É perigoso, mas as pessoas arriscam.",
+        "Vi prisioneiros de guerra com olhos que não refletem mais nada. Estão além do medo.",
+        "A batalha de Stalingrado está sendo narrada como algo sem precedentes. Milhões de mortos.",
+        "Hitler prometeu espaço vital para os alemães. O que está entregando é guerra total.",
+        "O dia D está sendo sussurrado. Uma invasão na França vai tentar virar o jogo.",
+        "Mulheres, homens, velhos, crianças — a guerra não distingue mais civil de combatente.",
+        "Estamos num conflito que vai matar entre cinquenta e oitenta milhões de pessoas no total.",
+        "A palavra 'holocausto' ainda não existe, mas o que ela vai descrever já está acontecendo.",
+        "Anne Frank escreve seu diário escondida num sótão em Amsterdã. Não sei que ela existe.",
+        "O código Enigma alemão está sendo quebrado em segredo na Inglaterra. Isso vai mudar a guerra.",
+        "Estamos num conflito onde a tecnologia avança mais rápido do que a ética consegue acompanhar.",
+        "Kamikaze — pilotos que colidem seus aviões em navios americanos. O desespero tomou essa forma.",
+        "Estamos num momento em que toda a civilização humana parece estar em jogo.",
+        "O exército vermelho soviético está pagando um preço que nenhum outro país pagaria.",
+        "Mussolini aliou a Itália à Alemanha. Essa decisão vai custar muito para os italianos.",
+        "A França capitulou em seis semanas. Ninguém acreditava que isso era possível.",
+        "Estamos num período onde mapas políticos são reescritos pela força toda semana.",
+        "A bomba atômica está sendo desenvolvida em segredo nos EUA. Ninguém aqui sabe disso.",
+        "Soldados de ambos os lados estão esgotados. A guerra dura anos demais para qualquer corpo.",
+        "O Mediterrâneo virou campo de batalha naval. Nenhum navio está seguro.",
+        "Estamos no maior conflito armado da história humana e ele ainda não acabou.",
+        "Campos de extermínio existem. A escala do que está acontecendo vai levar anos para ser compreendida.",
+        "O racionamento de borracha, metal e combustível nos EUA alimenta a máquina de guerra.",
+        "Estamos num conflito que começou por uma invasão e vai terminar com duas bombas atômicas.",
+        "Refugiados de toda a Europa fogem sem saber para onde. Os mapas não são mais confiáveis.",
+        "A propaganda de todos os lados é tão intensa que a verdade virou escassa.",
+        "Estamos num momento onde a humanidade mostra ao mesmo tempo o pior e o melhor de si.",
+        "Crianças crescem acreditando que guerra é a condição normal da existência."
+    ],
+    "Independência do Brasil": [
+        "Estamos no Brasil de 1822. A colônia está prestes a se tornar outra coisa — mas ninguém sabe o quê.",
+        "Dom Pedro recebeu cartas de Lisboa ordenando seu retorno. Ele as ignorou publicamente.",
+        "No dia 7 de setembro, às margens do Ipiranga, algo foi dito que ecoará por séculos.",
+        "A família real portuguesa está no Brasil há mais de uma década. Isso mudou tudo.",
+        "O grito foi ouvido por poucos, mas reverberou por todo um continente.",
+        "Estamos num país de escravizados que está prestes a ser 'livre' — apenas no papel, para muitos.",
+        "Dom João VI voltou para Portugal, mas deixou o filho. Esse foi um erro que ele não calculou.",
+        "A elite brasileira queria autonomia, mas não queria revolução. Dom Pedro era o meio-termo perfeito.",
+        "Tropas lusitanas ainda estão em várias cidades. A independência vai precisar ser confirmada na força.",
+        "O primeiro imperador do Brasil tem 24 anos e um temperamento explosivo.",
+        "Estamos numa nação-continente que vai demorar décadas para entender seus próprios limites.",
+        "A escravidão não acabou com a independência. Esse é o silêncio mais alto do momento.",
+        "Missões diplomáticas correm para conseguir reconhecimento internacional — especialmente da Inglaterra.",
+        "Os índios e negros não foram convidados para decidir o futuro do país. Foram decididos por outros.",
+        "O Império Brasileiro será a única monarquia americana duradoura. Ninguém previu isso.",
+        "Há festas nas cidades litorâneas, mas no sertão ninguém ainda sabe que o país mudou de nome.",
+        "A constituição de 1824 está sendo escrita e vai concentrar poder nas mãos de um só.",
+        "Estamos no maior país da América do Sul no momento em que ele encontra seu próprio nome.",
+        "A independência custou dinheiro — literalmente. Portugal foi pago para aceitar.",
+        "Dom Pedro I governará por menos de dez anos antes de abdicar para o filho de cinco.",
+        "José Bonifácio de Andrada e Silva era o mentor político da independência. Hoje é chamado patriarca.",
+        "A Bahia resistiu com tropas leais a Portugal. A independência foi conquistada também pela força.",
+        "Estamos numa colônia que virou reino, depois império, sem passar pela república.",
+        "O Rio de Janeiro é a capital de um país que ainda não sabe bem onde começa e onde termina.",
+        "A nobreza portuguesa que ficou no Brasil virou a elite do novo Império.",
+        "Estamos num momento onde a independência foi feita de cima para baixo, pela elite.",
+        "A Cisplatina — atual Uruguai — faz parte do Brasil nesse momento. Por pouco tempo.",
+        "Estamos num país que vai demorar décadas para estabelecer fronteiras definitivas.",
+        "A Inglaterra reconheceu a independência em troca de tratados comerciais favoráveis.",
+        "Dom Pedro I assinou a independência num campo às margens de um riacho. Sem cerimônia planejada.",
+        "As Cortes de Lisboa queriam recolonizar o Brasil. Dom Pedro disse não.",
+        "Estamos no único país da América do Sul que se tornou independente sem guerra civil prolongada.",
+        "A independência do Brasil foi um processo, não um momento. O 7 de setembro é o símbolo.",
+        "Maranhão e Grão-Pará ainda resistiam com forças portuguesas quando o resto do Brasil já era livre.",
+        "Estamos num território maior que a Europa continental sendo declarado nação soberana.",
+        "A independência brasileira foi reconhecida pelos EUA antes de qualquer país europeu.",
+        "Estamos no início do Primeiro Reinado, que vai terminar com uma abdicação dramática.",
+        "Dom Pedro I vai governar também Portugal depois. A independência que ele criou o consumiu.",
+        "Estamos num momento que define 200 anos de história, identidade e contradição brasileira.",
+        "A bandeira mudou — mas a estrutura social, não. Isso vai levar muito mais tempo."
+    ],
+    "Chegada do Homem à Lua": [
+        "Estamos em 1969 e o mundo inteiro está colado num aparelho de televisão.",
+        "Três homens foram lançados ao espaço numa cápsula menor do que um carro popular.",
+        "A corrida espacial entre EUA e URSS chegou a um ponto que ninguém tinha certeza que chegaria.",
+        "O rádio transmite a voz de um astronauta falando do espaço. É nítida e impossível ao mesmo tempo.",
+        "Armstrong disse algo sobre um pequeno passo. Vai ser repetido por gerações.",
+        "Estamos num momento em que a humanidade pisou pela primeira vez num astro que não é a Terra.",
+        "Buzz Aldrin e Neil Armstrong pousaram. Collins ficou orbitando. Ele era o mais solitário do universo.",
+        "A NASA tem menos poder computacional do que um celular de entrada. E foi assim mesmo.",
+        "A Guerra Fria estava por trás de tudo isso. A Lua era um prêmio político.",
+        "Manifestantes contra a guerra do Vietnã estavam do lado de fora do centro espacial.",
+        "As pegadas na superfície lunar vão durar milhões de anos. Não há vento para apagá-las.",
+        "Walter Cronkite tirou os óculos e ficou sem palavras por um momento. Isso diz tudo.",
+        "A missão Apollo 11 levou 8 dias no total. Parece pouco para o que significou.",
+        "Países que disputavam com os EUA aplaudiram discretamente. Humanidade primeiro.",
+        "A bandeira americana foi fincada, mas o Tratado do Espaço diz que ninguém pode reivindicar a Lua.",
+        "Crianças em todo o mundo decidiram nessa noite que queriam ser astronautas.",
+        "O módulo lunar se chamava Eagle — a águia pousou.",
+        "Missão Apollo 1 havia pegado fogo três anos antes. Três astronautas morreram. A NASA continuou.",
+        "Estamos numa noite de julho onde o impossível deixou de ser impossível.",
+        "A volta foi ainda mais tensa do que a ida. O motor de retorno não tinha redundância.",
+        "Yuri Gagarin havia sido o primeiro humano no espaço oito anos antes. Os soviéticos saíram na frente.",
+        "Neil Armstrong foi escolhido para ser o primeiro a sair justamente por sua humildade.",
+        "O solo lunar é cinza e pó. Armstrong disse que parecia 'talco fino'.",
+        "Estamos a 384 mil quilômetros da Terra. O sinal de rádio leva mais de um segundo para chegar.",
+        "Jacqueline Kennedy assistiu ao lançamento em Cabo Kennedy. Seu marido havia prometido isso.",
+        "Estamos num momento onde política, ciência e sonho colidaram numa superfície cinzenta.",
+        "Os astronautas ficaram em quarentena ao voltar. Ninguém sabia o que poderiam ter trazido.",
+        "A roupa espacial pesava 80 kg na Terra. Na gravidade lunar, era gerenciável.",
+        "Estamos no pico da corrida espacial — logo depois, o entusiasmo vai começar a diminuir.",
+        "Buzz Aldrin fez uma minicomenhão no módulo lunar. Levou pão e vinho.",
+        "Estamos num momento que foi transmitido ao vivo para 600 milhões de pessoas.",
+        "Os soviéticos tentaram chegar antes. Sua missão lunar falhou poucos meses antes.",
+        "Estamos numa noite que prova que metas impossíveis podem ser cumpridas com determinação.",
+        "Armstrong e Aldrin passaram 21 horas na superfície lunar. Coletaram 21 kg de amostras.",
+        "Estamos num momento em que a bandeira de um país foi plantada em outro mundo.",
+        "Katharine Johnson calculou as trajetórias à mão. Seu trabalho foi essencial.",
+        "O ônibus espacial ainda não existe. Esses homens foram em cima de um foguete descartável.",
+        "Estamos num evento que vai ser debatido, celebrado e questionado por décadas.",
+        "Houston, The Eagle has landed. Essa frase vai durar mais do que qualquer programa espacial.",
+        "Estamos num dos momentos mais assistidos e mais lembrados do século XX."
+    ],
+    "Queda do Muro de Berlim": [
+        "Estamos em Berlim, novembro de 1989. Algo está prestes a acontecer.",
+        "Um funcionário do governo da Alemanha Oriental anunciou por engano que as fronteiras estavam abertas.",
+        "As pessoas começaram a chegar com martelos e picões. Queriam seu pedaço do muro.",
+        "Famílias separadas por décadas se abraçaram nessa noite. Muitos estavam velhos demais.",
+        "O muro tinha 155 km. Foi construído em 1961 para evitar a fuga de cidadãos para o Ocidente.",
+        "Estamos no fim da Guerra Fria. A URSS está desmoronando e a Europa vai mudar completamente.",
+        "Os guardas-fronteira não sabiam o que fazer. As ordens não haviam chegado.",
+        "Champanhe foi vendido até o último drinque naquela madrugada.",
+        "O mundo assistiu ao vivo. A televisão mostrou o que palavras não dariam conta.",
+        "Mikhail Gorbachev estava em Moscou. Decidiu não intervir.",
+        "A Alemanha Ocidental vai absorver a Leste em menos de um ano. A reunificação vai ser dolorosa.",
+        "O sistema socialista da Alemanha Oriental durou 40 anos. Caiu numa noite.",
+        "Jovens dançavam em cima do muro. Horas antes, isso significava ser fuzilado.",
+        "Estamos num dos momentos simbólicos mais poderosos do século XX.",
+        "Pedaços do muro viraram souvenirs. Logo serão vendidos em lojas de aeroporto.",
+        "Margaret Thatcher estava nervosa com a reunificação alemã. Nem todos celebraram.",
+        "A Stasi, polícia secreta da Alemanha Oriental, tinha arquivos sobre quase toda a população.",
+        "As pessoas que cruzaram o muro nessa noite caminharam devagar no começo, como se não acreditassem.",
+        "Há uma geração de alemães orientais que só conhecia um tipo de Estado. Agora tudo muda.",
+        "Berlim vai demorar décadas para apagar as diferenças entre seus dois lados.",
+        "O muro foi construído numa noite de agosto de 1961. Caiu numa noite de novembro de 1989.",
+        "Egon Krenz havia assumido o governo dias antes. Já era tarde para salvar o regime.",
+        "Estamos num dos raros momentos onde alegria coletiva é a única coisa visível nas ruas.",
+        "Pessoas do Leste cruzavam para o Ocidente para ver as vitrines. Algumas nunca voltaram.",
+        "Estamos num evento que encerrou a divisão de uma cidade que durava desde 1961.",
+        "A queda do muro acelerou o colapso da URSS. O efeito dominó estava em movimento.",
+        "Helmut Kohl foi o chanceler que supervisionou a reunificação. Virou figura histórica.",
+        "David Bowie havia tocado em Berlim em 1987. Agora o muro caiu.",
+        "Estamos num momento onde a fronteira mais simbólica da Guerra Fria simplesmente desapareceu.",
+        "O Checkpoint Charlie virou museu. Turistas tiram foto onde soldados paravam carros.",
+        "A reunificação custou trilhões de marcos. O custo social foi ainda maior.",
+        "Estamos no início do fim do mundo bipolar que nasceu depois da Segunda Guerra.",
+        "As eleições livres na Alemanha Oriental foram convocadas para março de 1990.",
+        "A moeda da Alemanha Oriental foi trocada pela ocidental numa proporção que empobreceu muita gente.",
+        "Estamos num evento que define o fim do século XX mais do que qualquer outro.",
+        "Ossies e Wessies — alemães orientais e ocidentais — vão demorar gerações para se entender.",
+        "Estamos num momento que Ronald Reagan havia pedido em 1987: 'Mr. Gorbachev, derrube esse muro.'",
+        "As ruas de Berlim nessa noite são um rio de felicidade que vai durar até o amanhecer.",
+        "Estamos no evento que simboliza o fim da Europa dividida em dois blocos.",
+        "Nessa noite, história e presente colidiram de um jeito que todo mundo percebeu na hora."
+    ],
+    "Hiroshima": [
+        "Estamos em Hiroshima, no Japão, em agosto de 1945.",
+        "A guerra está quase no fim, mas o Japão se recusou a se render.",
+        "Um avião B-29 chamado Enola Gay decolou antes do amanhecer de uma ilha no Pacífico.",
+        "Às 8h15 da manhã, o céu virou branco.",
+        "Uma bomba de novo tipo, nunca usada em combate, foi lançada sobre uma cidade.",
+        "O calor foi tão intenso que sombras de pessoas foram queimadas nas paredes.",
+        "A cidade de Hiroshima teve entre 70 e 80 mil mortos instantâneos. Outros morreriam nos meses seguintes.",
+        "Ninguém nas ruas sabia o que era uma bomba atômica.",
+        "Três dias depois, uma segunda bomba caiu em Nagasaki.",
+        "O Japão se rendeu poucos dias depois. A Segunda Guerra Mundial chegou ao fim.",
+        "Os sobreviventes foram chamados de hibakusha — os bombardeados. Carregariam esse peso a vida toda.",
+        "A radiação continuou matando por anos. Cânceres apareceram décadas depois.",
+        "Estamos no momento que inaugura a era nuclear. O mundo nunca vai se sentir seguro da mesma forma.",
+        "O céu ficou nublado de poeira e fumaça por horas. A cidade estava silenciosa de um jeito errado.",
+        "Sobreviventes relataram ter visto corpos que não pareciam humanos caminhando pelas ruas.",
+        "Médicos chegaram para ajudar e ficaram doentes também. Ninguém entendia a radiação.",
+        "Hiroshima seria reconstruída. Um memorial foi erguido onde antes era o epicentro.",
+        "Estamos no evento que redefiniu o que é possível em destruição humana.",
+        "A fumaça em forma de cogumelo foi fotografada e essa imagem vai assombrar o século inteiro.",
+        "Robert Oppenheimer, ao ver o teste da bomba, citou o Bhagavad Gita sobre tornar-se morte.",
+        "O projeto Manhattan envolveu mais de 130 mil pessoas. A maioria não sabia para o que trabalhava.",
+        "Estamos a poucos quilômetros do epicentro. Tudo num raio de dois km foi destruído.",
+        "O Dome Genbaku — único prédio próximo do epicentro que ficou de pé — é hoje patrimônio.",
+        "Estamos no dia 6 de agosto de 1945. Em três dias, Nagasaki.",
+        "Crianças que foram à escola hoje não voltaram para casa.",
+        "Estamos num evento que dividiu o mundo em antes e depois das armas nucleares.",
+        "O calor atingiu 4000 graus Celsius no epicentro. Pedras derreteram.",
+        "Sadako Sasaki sobreviverá ao bombardeio mas morrerá de leucemia aos doze anos. Ela dobrava pássaros de papel.",
+        "Estamos num momento que vai criar o movimento antinuclear global.",
+        "O Japão havia bombardeado Pearl Harbor. Os EUA responderam com algo que Pearl Harbor nunca imaginou.",
+        "Estamos numa cidade que se tornou símbolo permanente do que a humanidade pode fazer a si mesma.",
+        "A decisão de soltar a bomba foi tomada por Truman. Ainda é debatida hoje.",
+        "O calor da explosão criou um vento tão forte que derrubou árvores a quilômetros.",
+        "Sobreviventes ficaram com queloides permanentes nas marcas das queimaduras.",
+        "Estamos no primeiro uso em combate de uma arma de destruição em massa de nível atômico.",
+        "Soldados americanos entraram na cidade depois e ficaram em silêncio. Nunca tinham visto nada assim.",
+        "Os japoneses levaram dias para entender o que havia acontecido. A destruição não tinha precedente.",
+        "O relatório sobre a bomba em Hiroshima foi censurado pelos EUA por anos.",
+        "Estamos num local que vai receber o Papa, presidentes e chefes de Estado por décadas a fio.",
+        "Hiroshima significa 'ilha larga'. Hoje significa outra coisa para o mundo inteiro."
+    ],
+    "Descobrimento do Brasil": [
+        "Estamos em 1500. Uma frota de treze navios cruzou o Atlântico e avistou terra.",
+        "Pedro Álvares Cabral comanda a expedição. Ele estava a caminho das Índias.",
+        "Uma terra coberta de árvores se estende até onde a vista alcança. Nenhum europeu esteve aqui antes.",
+        "Os marinheiros ficaram boquiabertos com os nativos. Os nativos, com os marinheiros.",
+        "Uma missa foi celebrada na praia. Foi o primeiro ato oficial que os portugueses registraram.",
+        "Pero Vaz de Caminha escrevia tudo em detalhes riquíssimos sobre essa terra nova.",
+        "Estamos num ponto de virada que vai mudar dois mundos — o europeu e o americano.",
+        "A terra foi chamada provisoriamente de Ilha de Vera Cruz, depois Terra de Santa Cruz.",
+        "O nome 'Brasil' viria do pau-brasil — a primeira grande extração comercial dessa terra.",
+        "Havia milhões de nativos vivendo aqui. Em um século, a maioria teria morrido de doenças europeias.",
+        "Os portugueses ficaram apenas 10 dias. Depois seguiram viagem.",
+        "Uma carta foi enviada ao rei de Portugal descrevendo essa nova terra.",
+        "Estamos num litoral que vai se tornar o mais longo do mundo com um único país.",
+        "O Tratado de Tordesilhas havia dividido o mundo entre Portugal e Espanha. Essa terra caiu do lado português.",
+        "Nenhum dos nativos que foram levados a Portugal sobreviveu muito tempo por lá.",
+        "A armada de Cabral era tecnicamente superior a tudo que existia no continente americano na época.",
+        "Estamos num momento em que dois mundos colidiram. Nenhum deles seria o mesmo depois.",
+        "As dunas e o mar raso da costa baiana foram o cenário do primeiro contato.",
+        "Aqui começa uma história de 500 anos que ainda está sendo processada e debatida.",
+        "Os colonizadores não vieram para ficar — mas ficaram. E mudaram tudo para sempre.",
+        "Bartolomeu Dias havia dobrado o Cabo da Boa Esperança 12 anos antes. A rota para as Índias estava aberta.",
+        "Vasco da Gama havia chegado à Índia dois anos antes. Cabral seguia a mesma rota.",
+        "Estamos num encontro que vai resultar em 300 anos de colonização.",
+        "Os tupinambás estavam na praia quando os navios apareceram. Nunca tinham visto velas assim.",
+        "A cruz foi erguida na praia. Foi o primeiro monumento europeu no Brasil.",
+        "Estamos no dia 22 de abril de 1500 — a data que o Brasil vai comemorar como seu 'começo'.",
+        "Pássaros desconhecidos voavam pelos navios. Caminha os descreveu com entusiasmo.",
+        "Estamos num momento onde um continente estava sendo 'descoberto' por quem já morava nele.",
+        "A Bahia de Porto Seguro ainda existe com esse nome. O lugar do primeiro contato.",
+        "Dois nativos foram levados a Portugal. Foram batizados com nomes cristãos.",
+        "Estamos num evento que o Brasil comemora mas os povos originários têm razão de questionar.",
+        "A frota seguiu para a Índia com menos navios — alguns naufragaram ao dobrar o Cabo.",
+        "Estamos no começo de uma relação de 500 anos entre Portugal e o território que vai se chamar Brasil.",
+        "O pau-brasil vai ser explorado até quase o esgotamento em décadas. A ganância começa no dia um.",
+        "Estamos num encontro entre o velho e o novo mundo que vai remodelar os dois.",
+        "Fernão de Noronha recebeu a primeira concessão para explorar o pau-brasil.",
+        "Estamos num momento onde nenhum dos lados pode prever o que vem a seguir.",
+        "Os nativos eram estimados em 2 a 5 milhões. Em 1600, restavam menos de um milhão.",
+        "A carta de Caminha ficou guardada por séculos num arquivo em Lisboa. Só foi publicada em 1817.",
+        "Estamos no momento zero de uma história que vai durar mais de cinco séculos."
+    ],
+    "Revolução Russa": [
+        "Estamos em Petrogrado, 1917. O czar acabou de ser deposto depois de séculos de romanov.",
+        "Filas para pão se estendem por quarteirões. A guerra está consumindo tudo.",
+        "Um homem chamado Lênin voltou do exílio num trem lacrado vindo da Alemanha.",
+        "Os sovietes operários começam a tomar o poder nos bairros industriais.",
+        "Soldados se recusam a atirar no povo. Esse é o momento em que o czar perde o exército.",
+        "Estamos num país em guerra, em colapso econômico, e agora em revolução simultânea.",
+        "A noite de outubro: o Palácio de Inverno foi tomado quase sem resistência.",
+        "O Partido Bolchevique prometeu paz, terra e pão. Essas três palavras valem mais que exércitos.",
+        "A família imperial está presa numa casa nos Urais. Seu destino está sendo decidido.",
+        "A Internacional Comunista começa a ser sonhada aqui. O mundo será tomado pela ideia.",
+        "Estamos no nascimento da União Soviética — um experimento que vai durar 74 anos.",
+        "Trotsky organiza o Exército Vermelho. Lenin faz a política. São um par improvável que funciona.",
+        "A guerra civil começa logo depois. Vermelhos contra brancos. O país está se destruindo.",
+        "Escritores e artistas estão entusiasmados. A revolução é também estética e cultural.",
+        "Ouço o hino da Internacional sendo cantado em russo. Parece que o mundo vai mesmo mudar.",
+        "A censura ainda não existe aqui. Isso vai mudar.",
+        "Camponeses estão tomando terras dos nobres. É caótico, mas é a terra que sempre quiseram.",
+        "O governo provisional tentou continuar a guerra. Esse erro os derrubou.",
+        "Estamos no maior experimento político do século XX começando agora.",
+        "Kerensky fugiu fantasiado para não ser capturado. Isso diz tudo sobre o fim do governo provisional.",
+        "Rasputin foi assassinado meses antes. A família imperial estava enfraquecida há anos.",
+        "Os bolcheviques eram minoria entre os socialistas. Mas eram os mais organizados.",
+        "Estamos num evento que vai dividir o mundo em dois campos por 70 anos.",
+        "Leon Trotsky organizou a insurreição de outubro com precisão militar.",
+        "A Rússia saiu da guerra com a Alemanha pelo Tratado de Brest-Litovsk. Pagou caro por isso.",
+        "Alexandra e o czar Nicolau II foram executados em Ecaterimburgo em julho de 1918.",
+        "Estamos no momento que inspirou revoluções em dezenas de países nos anos seguintes.",
+        "O terra, a paz e o pão eram promessas simples. Cumpri-las seria muito mais difícil.",
+        "Os mencheviques queriam uma revolução gradual. Os bolcheviques não tinham paciência para isso.",
+        "Estamos num país que vai sair de czar para comunismo num salto de poucos meses.",
+        "A Guarda Vermelha ocupou estações, pontes e edifícios públicos numa noite.",
+        "Estamos num evento que Lênin havia planejado por décadas no exílio europeu.",
+        "O congresso dos sovietes aprovou o poder bolchevique enquanto os mencheviques saíam da sala.",
+        "Estamos num evento que vai criar a maior nação do mundo por território.",
+        "Jonh Reed estava aqui e vai escrever Dez dias que abalaram o mundo. Ele viu tudo.",
+        "A revolução de fevereiro derrubou o czar. A de outubro derrubou o governo provisional.",
+        "Estamos numa virada onde o mundo ficou com medo e esperança ao mesmo tempo.",
+        "A Igreja Ortodoxa perdeu seu status privilegiado do dia para a noite.",
+        "Estamos no único país onde o marxismo chegou ao poder numa revolução real, não eleitoral.",
+        "Lênin morreu em 1924. Stalin vai consolidar o poder depois. Mas isso ainda não aconteceu."
+    ],
+    "Abolição da Escravatura no Brasil": [
+        "Estamos em 1888, no Brasil. Uma lei está prestes a ser assinada.",
+        "A Princesa Isabel segura a pena. Seu pai, o imperador, está doente na Europa.",
+        "A Lei Áurea tem apenas dois artigos. É curta para o peso que carrega.",
+        "Havia cerca de 700 mil pessoas escravizadas no Brasil nesse momento. Agora, legalmente livres.",
+        "O Brasil era o último país do ocidente a abolir a escravidão.",
+        "Nas ruas do Rio de Janeiro, houve festa. Mas os ex-escravizados não receberam terra nem indenização.",
+        "Fazendeiros que perderam mão de obra escravizada ficariam furiosos. A Monarquia perderia o apoio deles.",
+        "Um ano depois, a República seria proclamada. Não é coincidência.",
+        "O movimento abolicionista tinha nomes como Luiz Gama, José do Patrocínio, Joaquim Nabuco.",
+        "Estamos num país que demorou 388 anos para abolir a escravidão desde a chegada dos portugueses.",
+        "A liberdade foi proclamada, mas a estrutura social não mudou da noite para o dia.",
+        "Muitos escravizados já haviam fugido ou sido libertados por fazendeiros antes dessa data.",
+        "O Quilombo dos Palmares havia sido destruído dois séculos antes. A resistência era muito mais antiga.",
+        "A lei foi assinada no Rio de Janeiro, que era a capital do Império na época.",
+        "Estamos num momento de alívio incompleto — a liberdade sem reparação é apenas meio caminho.",
+        "A maioria dos escravizados libertos vai parar nas periferias das cidades sem nenhuma estrutura.",
+        "O Brasil recebeu mais africanos escravizados do que qualquer outro país — cerca de 40% do total.",
+        "Há quem chame a abolição de 'lenta, gradual e segura' — segura para quem, era a pergunta.",
+        "Estamos no dia em que o papel mudou. A realidade levaria muito mais tempo.",
+        "A Lei do Ventre Livre de 1871 havia libertado os filhos de escravizadas. Era insuficiente.",
+        "A Lei dos Sexagenários de 1885 libertou idosos. Uma ironia cruel disfarçada de concessão.",
+        "André Rebouças e outros abolicionistas pressionaram por décadas. O resultado foi incompleto.",
+        "Estamos num país que vai continuar pagando o preço dessa história por gerações.",
+        "A Igreja Católica raramente se opôs à escravidão no Brasil. Isso diz muito.",
+        "Estamos no 13 de maio de 1888 — uma data que o Brasil precisa lembrar com honestidade.",
+        "O tráfico negreiro havia sido proibido em 1850, mas continuou clandestino por décadas.",
+        "Estamos num momento onde a libertação legal e a libertação real são coisas muito diferentes.",
+        "A princesa Isabel ficou conhecida como a Redentora. Os abolicionistas negros são menos lembrados.",
+        "Imigrantes europeus seriam trazidos para substituir a mão de obra escravizada. Racismo por política.",
+        "Estamos num país onde a escravidão durou mais do que em qualquer outro do ocidente.",
+        "A abolição foi também uma manobra política — o Império tentou se salvar com ela.",
+        "Caifazes como Antônio Bento organizavam fugas em massa de escravizados. A pressão vinha de baixo.",
+        "O visconde do Rio Branco, filho, assinou a lei. Dom Pedro II estava em Petrópolis.",
+        "Estamos num momento onde o país tinha mais escravizados do que qualquer nação do hemisfério.",
+        "A herança da escravidão ainda é visível na desigualdade racial do Brasil do século XXI.",
+        "Estamos num momento que parece um fim mas é, na verdade, uma virada incompleta.",
+        "Zumbi dos Palmares morreu em 1695. Levou 193 anos para isso virar lei.",
+        "A maioria dos fazendeiros recebeu indenização quando da abolição do tráfico. Os escravizados, nada.",
+        "Estamos no único país da América que foi administrado por uma família real europeia e ainda mantinha escravidão.",
+        "O peso histórico desse momento ainda está sendo carregado. Não acabou com a assinatura."
+    ],
+    "Pandemia de COVID-19": [
+        "As ruas estão desertas. Uma cidade de milhões de pessoas em silêncio.",
+        "Todo mundo usa máscara. É estranho não ver o rosto das pessoas.",
+        "Os hospitais estão lotados e os médicos estão exaustos há semanas.",
+        "O governo pediu para as pessoas ficarem em casa. Muitas não podem.",
+        "Estamos em 2020 e um vírus está mudando tudo ao mesmo tempo.",
+        "Famílias estão sendo separadas. Velhos estão morrendo sem a família por perto.",
+        "As videochamadas substituíram abraços. É um consolo e uma angústia ao mesmo tempo.",
+        "A corrida por uma vacina está acontecendo em tempo recorde. Ninguém fez isso antes tão rápido.",
+        "Economias inteiras pararam. Aviões ficaram em terra. Hotéis, vazios.",
+        "Ouço sirenes de ambulância o dia inteiro. Parei de contar qual é qual.",
+        "O comércio fechou, as escolas fecharam, os bares fecharam. A vida parou.",
+        "Uma geração de crianças perdeu um, dois anos de escola e de socialização.",
+        "Caixões se acumulam em algumas cidades porque os cemitérios não conseguem dar conta.",
+        "Teorias sobre a origem do vírus circulam sem parar. Ninguém sabe a resposta certa ainda.",
+        "Trabalhadores de saúde viraram heróis. Muitos morreram no trabalho.",
+        "O mundo descobriu que desigualdade mata — os mais pobres morreram muito mais.",
+        "Estamos numa pandemia que vai matar mais de seis milhões de pessoas oficialmente registradas.",
+        "Países que pareciam preparados ruíram. Países que pareciam frágeis sobreviveram melhor.",
+        "Um vírus microscópico reescreveu a política, a economia e os afetos do mundo inteiro.",
+        "Estamos vivendo algo que vai ser estudado por gerações. Ninguém que está aqui vai esquecer.",
+        "A Itália entrou em colapso em março de 2020. As imagens dos corredores dos hospitais são perturbadoras.",
+        "O isolamento social revelou solidões que as pessoas não sabiam que tinham.",
+        "Estamos numa crise sanitária que expôs como o mundo globalizado é frágil e interconectado.",
+        "Os supermercados esgotaram papel higiênico primeiro. Isso vai ser estudado em psicologia por anos.",
+        "Plataformas de videoconferência viraram infraestrutura essencial do dia para a noite.",
+        "Estamos num evento que começou em Wuhan, China, e chegou a todos os países em semanas.",
+        "Profissionais de saúde reutilizavam máscaras por falta de equipamento. Em países ricos.",
+        "A economia informal foi a mais atingida — sem renda, sem seguro, sem rede de apoio.",
+        "Estamos num momento onde a ciência foi ao mesmo tempo celebrada e atacada politicamente.",
+        "A vacina da Pfizer/BioNTech foi aprovada em tempo recorde usando tecnologia de mRNA.",
+        "Países ricos compraram vacinas antes mesmo delas existirem. Os pobres esperaram.",
+        "O lockdown foi a medida mais impopular e mais eficaz ao mesmo tempo.",
+        "Estamos num evento que vai dividir o 'antes' e 'depois' para quem viveu.",
+        "Músicos tocando em janelas. Médicos aplaudidos às 18h. Solidariedade e medo juntos.",
+        "As escolas fecharam em março de 2020. Algumas não reabririam por mais de um ano.",
+        "Estamos numa pandemia que não tem data de início consensual nem data de fim clara.",
+        "Os cemitérios de Manaus, no Brasil, operavam 24 horas. As imagens foram ao mundo.",
+        "Estamos num evento que mostrou que nenhum país estava realmente preparado para o que prometeu estar.",
+        "A palavra 'essencial' ganhou novo significado — médicos, entregadores, faxineiros.",
+        "Estamos numa crise que vai redefinir saúde pública, trabalho remoto e confiança em instituições."
+    ]
+}
+
+NOMES_EVENTOS = list(EVENTOS.keys())
+
+TOTAL_FASES = 5
+DICAS_POR_FASE = 10
+ALTERNATIVAS_POR_FASE = 5
+
+
+def limpar_tela():
+    import os
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+
+def linha(char='-', tamanho=60):
+    print(char * tamanho)
+
+
+def cabecalho(fase_atual, pontos):
+    limpar_tela()
+    linha('=')
+    print(f"  EM QUE ÉPOCA VOCÊ ESTÁ?  |  Fase {fase_atual}/{TOTAL_FASES}  |  Pontos: {pontos}")
+    linha('=')
+    print()
+
+
+def escolher_alternativas(correto):
+    outros = [n for n in NOMES_EVENTOS if n != correto]
+    random.shuffle(outros)
+    opcoes = [correto] + outros[:ALTERNATIVAS_POR_FASE - 1]
+    random.shuffle(opcoes)
+    return opcoes
+
+
+def rodar_fase(numero_fase, eventos_usados, pontos):
+    disponiveis = [n for n in NOMES_EVENTOS if n not in eventos_usados]
+    if not disponiveis:
+        disponiveis = NOMES_EVENTOS[:]
+
+    nome_evento = random.choice(disponiveis)
+    dicas = random.sample(EVENTOS[nome_evento], DICAS_POR_FASE)
+    alternativas = escolher_alternativas(nome_evento)
+
+    dicas_reveladas = []
+    respondeu = False
+    acertou = False
+    bonus = 0
+
+    for i, dica in enumerate(dicas):
+        cabecalho(numero_fase, pontos)
+        print(f"  Fase {numero_fase} — dica {i + 1} de {DICAS_POR_FASE}")
+        linha()
+        print()
+
+        if dicas_reveladas:
+            print("  Dicas anteriores:")
+            for j, d_ant in enumerate(dicas_reveladas):
+                print(f"  {j + 1}. {d_ant}")
+            print()
+            linha()
+
+        print(f"\n  Dica {i + 1}: {dica}\n")
+        linha()
+
+        dicas_reveladas.append(dica)
+
+        if i < DICAS_POR_FASE - 1:
+            print("  [P] Próxima dica")
+            print("  [R] Já sei! Quero responder agora")
+            print()
+            while True:
+                escolha = input("  Sua escolha: ").strip().upper()
+                if escolha in ('P', 'R'):
+                    break
+                print("  Digite P ou R.")
+
+            if escolha == 'R':
+                respondeu = True
+                break
+        else:
+            print("  Você usou todas as dicas. Hora de responder!\n")
+            input("  [Enter para ver as alternativas]")
+            respondeu = True
+            break
+
+    cabecalho(numero_fase, pontos)
+    print(f"  Fase {numero_fase} — Onde você estava?\n")
+    linha()
+    print()
+
+    for idx, alt in enumerate(alternativas):
+        print(f"  {idx + 1}. {alt}")
+
+    print()
+    linha()
+
+    while True:
+        try:
+            escolha_num = int(input("  Digite o número da sua resposta: "))
+            if 1 <= escolha_num <= len(alternativas):
+                break
+            print(f"  Escolha entre 1 e {len(alternativas)}.")
+        except ValueError:
+            print("  Digite um número válido.")
+
+    resposta = alternativas[escolha_num - 1]
+    acertou = resposta == nome_evento
+
+    if acertou:
+        bonus = max(1, DICAS_POR_FASE + 1 - len(dicas_reveladas))
+
+    cabecalho(numero_fase, pontos + bonus if acertou else pontos)
+    linha()
+
+    if acertou:
+        print(f"\n  CORRETO! Era: {nome_evento}")
+        print(f"  Você usou {len(dicas_reveladas)} dica(s) e ganhou {bonus} ponto(s)!\n")
+    else:
+        print(f"\n  Não foi dessa vez.")
+        print(f"  A resposta era: {nome_evento}")
+        print(f"  Você escolheu: {resposta}\n")
+
+    linha()
+    input("\n  [Enter para continuar]")
+
+    return acertou, bonus, nome_evento
+
+
+def tela_resultado_final(resultados, pontos_total):
+    limpar_tela()
+    linha('=')
+    print("  RESULTADO FINAL")
+    linha('=')
+    print()
+
+    acertos = sum(1 for r in resultados if r['acertou'])
+
+    print(f"  Acertos: {acertos}/{TOTAL_FASES}")
+    print(f"  Pontos:  {pontos_total}")
+    print()
+    linha()
+
+    for i, r in enumerate(resultados):
+        simbolo = "✓" if r['acertou'] else "✗"
+        print(f"  {simbolo} Fase {i + 1}: {r['evento']}")
+
+    print()
+    linha()
+
+    if acertos == 5:
+        msg = "Perfeito! Você é um viajante do tempo de verdade."
+    elif acertos >= 3:
+        msg = "Boa memória histórica. A história não te engana fácil."
+    elif acertos >= 1:
+        msg = "Você sobreviveu. A história é complicada mesmo."
+    else:
+        msg = "Talvez seja hora de rever aquele livro de história..."
+
+    print(f"\n  {msg}\n")
+    linha('=')
+
+
+def jogar():
+    limpar_tela()
+    linha('=')
+    print("  EM QUE ÉPOCA VOCÊ ESTÁ?")
+    linha('=')
+    print()
+    print("  5 fases. Em cada fase você recebe dicas de um evento histórico.")
+    print("  Tente acertar antes de esgotar todas as dicas.")
+    print("  Quanto menos dicas usar, mais pontos você ganha!")
+    print()
+    linha()
+    input("  [Enter para começar]")
+
+    pontos = 0
+    resultados = []
+    eventos_usados = []
+
+    for fase in range(1, TOTAL_FASES + 1):
+        acertou, bonus, evento = rodar_fase(fase, eventos_usados, pontos)
+        pontos += bonus
+        eventos_usados.append(evento)
+        resultados.append({'acertou': acertou, 'evento': evento, 'bonus': bonus})
+
+    tela_resultado_final(resultados, pontos)
+
+    print()
+    while True:
+        jogar_de_novo = input("  Jogar de novo? (s/n): ").strip().lower()
+        if jogar_de_novo in ('s', 'n'):
+            break
+
+    if jogar_de_novo == 's':
+        jogar()
+
+
+if __name__ == "__main__":
+    jogar()
