@@ -1,0 +1,790 @@
+import time
+import random
+import json
+import os
+
+# Adicionada a chave "tipo" pra diferenciar consumíveis, armas e acessórios
+ITENS_DB = {
+    "pocao_pequena": {"nome": "Poção de Cura Pequena", "peso": 0.5, "raridade": "Comum", "cura": 30, "preco": 15, "tipo": "consumivel"},
+    "espada_ferro": {"nome": "Espada de Ferro Enferrujada", "peso": 2.0, "raridade": "Comum", "dano": 5, "preco": 50, "tipo": "arma"},
+    "machado_batalha": {"nome": "Machado de Batalha Pesado", "peso": 4.0, "raridade": "Incomum", "dano": 8, "preco": 90, "tipo": "arma"},
+    "arco_cacador": {"nome": "Arco do Caçador", "peso": 1.5, "raridade": "Comum", "dano": 4, "preco": 45, "tipo": "arma"},
+    "adaga_furtiva": {"nome": "Adaga Furtiva", "peso": 0.8, "raridade": "Incomum", "dano": 6, "preco": 60, "tipo": "arma"},
+    "amuleto_sorte": {"nome": "Amuleto da Raposa", "peso": 0.1, "raridade": "Raro", "carisma": 2, "preco": 120, "tipo": "acessorio"}
+}
+
+class Personagem:
+    def __init__(self, nome, raca, classe):
+        self.nome = nome
+        self.raca = raca
+        self.classe = classe
+        
+        self.nivel = 1 
+        self.xp_atual = 0
+        self.xp_necessaria = 100
+        
+        self.forca = 10
+        self.defesa = 5
+        self.destreza = 10
+        self.inteligencia = 10
+        self.carisma = 10
+        
+        self.vida_max = 100
+        self.vida_atual = 100
+        self.mana_max = 50
+        self.mana_atual = 50
+        
+        self.inventario = []
+        self.arma_equipada = None # ID da arma atualmente equipada
+        self.bonus_melhoria = {}  # Dicionário pra salvar os upgrades do ferreiro
+        
+        self.peso_maximo = self.forca * 2.5
+        self.ouro = 0
+        
+        self.aplicar_bonus_raca()
+        self.aplicar_bonus_classe()
+
+    def aplicar_bonus_raca(self):
+        if self.raca == "Humano":
+            self.forca += 2
+            self.defesa += 2
+            self.destreza += 2
+            self.inteligencia += 2
+            self.carisma += 2
+        elif self.raca == "Elfo":
+            self.destreza += 5
+            self.inteligencia += 5
+            self.mana_max += 20
+        elif self.raca == "Anão":
+            self.forca += 5
+            self.defesa += 5
+            self.vida_max += 20
+        elif self.raca == "Orc":
+            self.forca += 8
+            self.defesa += 3
+            self.inteligencia -= 2
+            self.carisma -= 2
+        elif self.raca == "Draconato":
+            self.forca += 4
+            self.defesa += 4
+            self.carisma += 3
+
+    def aplicar_bonus_classe(self):
+        if self.classe == "Guerreiro":
+            self.forca += 5
+            self.defesa += 3
+            self.vida_max += 20
+            self.inventario.append("espada_ferro")
+            self.arma_equipada = "espada_ferro"
+        elif self.classe == "Mago":
+            self.inteligencia += 5
+            self.mana_max += 30
+        elif self.classe == "Ladino":
+            self.destreza += 5
+            self.defesa += 1
+            self.inventario.append("adaga_furtiva")
+            self.arma_equipada = "adaga_furtiva"
+        elif self.classe == "Paladino":
+            self.forca += 3
+            self.defesa += 4
+            self.vida_max += 25
+            self.carisma += 2
+        elif self.classe == "Arqueiro":
+            self.destreza += 6
+            self.forca += 2
+            self.inventario.append("arco_cacador")
+            self.arma_equipada = "arco_cacador"
+        
+        self.inventario.append("pocao_pequena") # Todo mundo começa com uma poção
+        self.vida_atual = self.vida_max
+        self.mana_atual = self.mana_max
+        self.atualizar_peso_maximo()
+
+    def obter_dano_arma(self):
+        if self.arma_equipada:
+            dano_base = ITENS_DB[self.arma_equipada].get("dano", 0)
+            bonus = self.bonus_melhoria.get(self.arma_equipada, 0)
+            return dano_base + bonus
+        return 0
+
+    def atualizar_peso_maximo(self):
+        self.peso_maximo = self.forca * 2.5
+
+    def calcular_peso_atual(self):
+        return sum(ITENS_DB[item]["peso"] for item in self.inventario)
+
+    def ganhar_xp(self, quantidade):
+        print(f"Vc ganhou {quantidade} de XP!")
+        self.xp_atual += quantidade
+        while self.xp_atual >= self.xp_necessaria:
+            self.subir_nivel()
+
+    def subir_nivel(self):
+        self.nivel += 1
+        self.xp_atual -= self.xp_necessaria
+        self.xp_necessaria = int(self.xp_necessaria * 1.5)
+        
+        self.forca += 2
+        self.defesa += 1
+        self.vida_max += 15
+        self.mana_max += 5
+        self.vida_atual = self.vida_max
+        self.mana_atual = self.mana_max
+        self.atualizar_peso_maximo()
+        
+        print(f"\nPARABÉNS! {self.nome} alcançou o Nível {self.nivel}!")
+        print(f"Sua vida aumentou pra {self.vida_max}, mana pra {self.mana_max} e seus atributos melhoraram.\n")
+
+    def pegar_item(self, id_item):
+        if id_item not in ITENS_DB:
+            return
+        
+        item = ITENS_DB[id_item]
+        peso_futuro = self.calcular_peso_atual() + item["peso"]
+        
+        if peso_futuro > self.peso_maximo:
+            print(f"Vc está sobrecarregado! Não pode carregar {item['nome']}.")
+        else:
+            self.inventario.append(id_item)
+            print(f"Vc pegou: {item['nome']} ({item['peso']}kg)")
+
+    def curar(self, quantidade):
+        cura_real = min(self.vida_max - self.vida_atual, quantidade)
+        self.vida_atual += cura_real
+        print(f"Vc recuperou {cura_real} de Vida! (Vida atual: {self.vida_atual}/{self.vida_max})")
+
+    def mostrar_status(self):
+        print("\n" + "="*40)
+        print(f"{self.nome} | {self.raca} {self.classe} | Nível {self.nivel}")
+        print(f"Vida: {self.vida_atual}/{self.vida_max} | Mana: {self.mana_atual}/{self.mana_max}")
+        print(f"XP: {self.xp_atual}/{self.xp_necessaria}")
+        print(f"FOR: {self.forca} | DEF: {self.defesa} | DES: {self.destreza} | INT: {self.inteligencia}")
+        
+        arma_nome = "Desarmado"
+        dano_extra = ""
+        if self.arma_equipada:
+            arma_nome = ITENS_DB[self.arma_equipada]["nome"]
+            bonus = self.bonus_melhoria.get(self.arma_equipada, 0)
+            if bonus > 0:
+                dano_extra = f" (+{bonus} Melhoria)"
+        
+        print(f"Arma Equipada: {arma_nome} (Dano Total: {self.obter_dano_arma()}){dano_extra}")
+        print(f"Carga: {self.calcular_peso_atual()}/{self.peso_maximo}kg | Ouro: {self.ouro}")
+        print("Inventário:", [ITENS_DB[i]["nome"] for i in self.inventario] if self.inventario else "Vazio")
+        print("="*40 + "\n")
+
+
+class Inimigo:
+    def __init__(self, nivel_jogador):
+        nomes_possiveis = ["Goblin Saqueador", "Esqueleto Arqueiro", "Lobo Gigante", "Aranha Cavernícola", "Orc Enfurecido", "Slime Ácido"]
+        self.nome = random.choice(nomes_possiveis)
+        
+        self.nivel = max(1, nivel_jogador + random.randint(-1, 2))
+        
+        self.vida_max = random.randint(30, 50) + (self.nivel * 8)
+        self.vida_atual = self.vida_max
+        self.forca = random.randint(4, 8) + (self.nivel * 2)
+        self.defesa = random.randint(1, 4) + (self.nivel * 1)
+        
+        self.xp_drop = random.randint(20, 40) * self.nivel
+        self.ouro_drop = random.randint(5, 15) * self.nivel
+
+def executar_ataque_especial(jogador, inimigo):
+    dano_arma = jogador.obter_dano_arma()
+    
+    if jogador.classe == "Guerreiro":
+        custo = 15
+        nome_atk = "Golpe Demolidor"
+        dano = max(1, ((jogador.forca + dano_arma) * 2) - inimigo.defesa)
+    elif jogador.classe == "Mago":
+        custo = 25
+        nome_atk = "Bola de Fogo"
+        dano = max(1, (jogador.inteligencia * 3) + dano_arma - (inimigo.defesa // 2))
+    elif jogador.classe == "Ladino":
+        custo = 10
+        nome_atk = "Ataque Furtivo"
+        dano = max(1, ((jogador.destreza + dano_arma) * 2) - inimigo.defesa)
+    elif jogador.classe == "Paladino":
+        custo = 20
+        nome_atk = "Golpe Divino"
+        dano = max(1, ((jogador.forca + dano_arma) * 1.5) + (jogador.carisma) - inimigo.defesa)
+    elif jogador.classe == "Arqueiro":
+        custo = 15
+        nome_atk = "Chuva de Flechas"
+        dano = max(1, ((jogador.destreza + dano_arma) * 2.5) - inimigo.defesa)
+    else:
+        custo = 10
+        nome_atk = "Ataque Forte"
+        dano = max(1, ((jogador.forca + dano_arma) * 1.5) - inimigo.defesa)
+
+    if jogador.mana_atual >= custo:
+        jogador.mana_atual -= custo
+        inimigo.vida_atual -= int(dano)
+        print(f"Vc usa {nome_atk}! Consome {custo} de Mana e causa um dano devastador de {int(dano)} no {inimigo.nome}!")
+        return True
+    else:
+        print(f"Mana insuficiente pra usar {nome_atk}! Vc precisa de {custo} de Mana.")
+        return False
+
+def iniciar_combate(jogador):
+    inimigo = Inimigo(jogador.nivel)
+    print("\n" + "!"*40)
+    print(f"UM {inimigo.nome.upper()} (Nível {inimigo.nivel}) APARECEU!")
+    print("!"*40)
+    
+    while jogador.vida_atual > 0 and inimigo.vida_atual > 0:
+        time.sleep(1)
+        print(f"\n--- SEU TURNO ---")
+        print(f"Sua Vida: {jogador.vida_atual}/{jogador.vida_max} | Mana: {jogador.mana_atual}/{jogador.mana_max}")
+        print(f"Vida do {inimigo.nome}: {inimigo.vida_atual}/{inimigo.vida_max}")
+        print("[1] Atacar")
+        print("[2] Usar Poção (Requer no inventário)")
+        print("[3] Fugir")
+        print("[4] Ataque Especial")
+        
+        acao = input("O q vc faz? ")
+        
+        if acao == "1":
+            dano = max(1, jogador.forca + jogador.obter_dano_arma() - inimigo.defesa + random.randint(-2, 2))
+            inimigo.vida_atual -= dano
+            print(f"Vc ataca o {inimigo.nome} e causa {dano} de dano!")
+            
+        elif acao == "2":
+            if "pocao_pequena" in jogador.inventario:
+                jogador.inventario.remove("pocao_pequena")
+                jogador.curar(ITENS_DB["pocao_pequena"]["cura"])
+                print("Vc bebeu uma Poção de Cura Pequena.")
+            else:
+                print("Vc não tem poções no inventário! Perdeu o turno procurando na mochila...")
+                
+        elif acao == "3":
+            chance_fuga = random.randint(1, 100)
+            if chance_fuga > 40:
+                print("Vc conseguiu fugir da batalha!")
+                return
+            else:
+                print("O inimigo bloqueou sua rota de fuga!")
+                
+        elif acao == "4":
+            sucesso = executar_ataque_especial(jogador, inimigo)
+            if not sucesso:
+                print("Vc hesitou e perdeu o turno.")
+            
+        else:
+            print("Resposta errada. Por favor, digite um número válido entre 1 e 4.")
+            continue
+
+        if inimigo.vida_atual <= 0:
+            print(f"\nVc derrotou o {inimigo.nome}!")
+            print(f"Vc encontrou {inimigo.ouro_drop} de Ouro.")
+            jogador.ouro += inimigo.ouro_drop
+            jogador.ganhar_xp(inimigo.xp_drop)
+            break
+            
+        time.sleep(1)
+        print(f"\n--- TURNO DO INIMIGO ---")
+        dano_inimigo = max(1, inimigo.forca - jogador.defesa + random.randint(-2, 2))
+        jogador.vida_atual -= dano_inimigo
+        print(f"O {inimigo.nome} te ataca e causa {dano_inimigo} de dano!")
+        
+        if jogador.vida_atual <= 0:
+            print("\nVC MORREU... O mundo escurece ao seu redor.")
+            print("Game Over.")
+            break
+
+def salvar_jogo(personagem, arquivo="savegame.json"):
+    dados = personagem.__dict__
+    with open(arquivo, 'w', encoding='utf-8') as f:
+        json.dump(dados, f, ensure_ascii=False, indent=4)
+    print("Jogo salvo com sucesso!")
+
+def carregar_jogo(arquivo="savegame.json"):
+    if not os.path.exists(arquivo):
+        return None
+    with open(arquivo, 'r', encoding='utf-8') as f:
+        dados = json.load(f)
+    p = Personagem(dados["nome"], dados["raca"], dados["classe"])
+    p.__dict__.update(dados)
+    print("Jogo carregado com sucesso!")
+    return p
+
+def visitar_loja(jogador):
+    print("\n" + "="*40)
+    print("BEM-VINDO À LOJA DO MERCADOR")
+    print("="*40)
+    
+    while True:
+        print(f"\nSeu Ouro atual: {jogador.ouro}")
+        print("O q vc deseja fazer?")
+        print("[1] Comprar Itens")
+        print("[2] Vender Itens")
+        print("[3] Sair da Loja")
+        
+        escolha = input("Escolha: ")
+        
+        if escolha == "1":
+            print("\n--- ITENS À VENDA ---")
+            chaves_itens = list(ITENS_DB.keys())
+            for i, chave in enumerate(chaves_itens):
+                item = ITENS_DB[chave]
+                dano_str = f" (Dano: {item['dano']})" if "dano" in item else ""
+                print(f"[{i+1}] {item['nome']}{dano_str} - {item['preco']} Ouro (Peso: {item['peso']}kg)")
+            print(f"[{len(chaves_itens)+1}] Voltar")
+            
+            compra = input("Digite o número do item q deseja comprar: ")
+            if compra.isdigit():
+                idx = int(compra) - 1
+                if 0 <= idx < len(chaves_itens):
+                    id_item = chaves_itens[idx]
+                    item_info = ITENS_DB[id_item]
+                    
+                    if jogador.ouro >= item_info["preco"]:
+                        peso_futuro = jogador.calcular_peso_atual() + item_info["peso"]
+                        if peso_futuro <= jogador.peso_maximo:
+                            jogador.ouro -= item_info["preco"]
+                            jogador.inventario.append(id_item)
+                            print(f"Sucesso! Vc comprou: {item_info['nome']}")
+                        else:
+                            print("Vc está mto pesado pra carregar isso!")
+                    else:
+                        print("Vc não tem ouro suficiente!")
+                elif idx == len(chaves_itens):
+                    continue
+                else:
+                    print("Resposta errada. Digite um número válido.")
+            else:
+                print("Resposta errada. Digite apenas números.")
+                    
+        elif escolha == "2":
+            if not jogador.inventario:
+                print("\nSua mochila está vazia. Não há nada pra vender.")
+            else:
+                print("\n--- SEU INVENTÁRIO (Venda) ---")
+                for i, id_item in enumerate(jogador.inventario):
+                    item = ITENS_DB[id_item]
+                    preco_venda = max(1, item['preco'] // 2)
+                    equipado = " (Equipada)" if id_item == jogador.arma_equipada else ""
+                    print(f"[{i+1}] {item['nome']}{equipado} - Vender por {preco_venda} Ouro")
+                print(f"[{len(jogador.inventario)+1}] Voltar")
+                
+                venda = input("Digite o número do item q deseja vender: ")
+                if venda.isdigit():
+                    idx = int(venda) - 1
+                    if 0 <= idx < len(jogador.inventario):
+                        id_item_vendido = jogador.inventario.pop(idx)
+                        
+                        if id_item_vendido == jogador.arma_equipada and id_item_vendido not in jogador.inventario:
+                            jogador.arma_equipada = None
+                            print(f"Sua arma {ITENS_DB[id_item_vendido]['nome']} foi desequipada!")
+
+                        preco_venda = max(1, ITENS_DB[id_item_vendido]['preco'] // 2)
+                        jogador.ouro += preco_venda
+                        print(f"Vc vendeu {ITENS_DB[id_item_vendido]['nome']} e recebeu {preco_venda} de Ouro!")
+                    elif idx == len(jogador.inventario):
+                        continue
+                    else:
+                        print("Resposta errada. Digite um número válido.")
+                else:
+                    print("Resposta errada. Digite apenas números.")
+                        
+        elif escolha == "3":
+            print("Mercador: 'Volte sempre, aventureiro!'")
+            break
+        else:
+            print("Resposta errada. Digite 1, 2 ou 3.")
+
+def visitar_ferreiro(jogador):
+    print("\n" + "="*40)
+    print("FERREIRO: 'Traga sua arma e seu ouro. Eu a farei cortar até o vento!'")
+    print("="*40)
+    
+    armas_inv = list(set([item for item in jogador.inventario if ITENS_DB[item].get("tipo") == "arma"]))
+    
+    if not armas_inv:
+        print("\nFerreiro: 'Vc não tem armas pra melhorar, moleque! Compre uma primeiro.'")
+        return
+    
+    while True:
+        print(f"\nSeu Ouro atual: {jogador.ouro}")
+        print("Armas disponíveis pra melhorar:")
+        
+        for i, id_arma in enumerate(armas_inv):
+            nome = ITENS_DB[id_arma]["nome"]
+            dano_base = ITENS_DB[id_arma]["dano"]
+            bonus = jogador.bonus_melhoria.get(id_arma, 0)
+            custo = 30 + (bonus * 20)
+            print(f"[{i+1}] {nome} (Dano Total atual: {dano_base + bonus}) - Custo da Melhoria: {custo} Ouro")
+            
+        print(f"[{len(armas_inv)+1}] Sair do Ferreiro")
+        
+        escolha = input("Qual arma deseja melhorar? ")
+        
+        if escolha.isdigit():
+            idx = int(escolha) - 1
+            if 0 <= idx < len(armas_inv):
+                id_arma = armas_inv[idx]
+                bonus_atual = jogador.bonus_melhoria.get(id_arma, 0)
+                custo = 30 + (bonus_atual * 20)
+                
+                if jogador.ouro >= custo:
+                    jogador.ouro -= custo
+                    jogador.bonus_melhoria[id_arma] = bonus_atual + 2
+                    print(f"\nCLANG! CLANG! O ferreiro bate o martelo incansavelmente.")
+                    print(f"Sua arma {ITENS_DB[id_arma]['nome']} foi melhorada! (+2 Dano)")
+                else:
+                    print("\nFerreiro: 'Tá achando q trabalho de graça? Volte com mais ouro!'")
+            elif idx == len(armas_inv):
+                print("Ferreiro: 'Até logo, não deixe sua lâmina enferrujar!'")
+                break
+            else:
+                print("Resposta errada. Escolha uma opção válida.")
+        else:
+            print("Resposta errada. Digite apenas números.")
+
+def gerenciar_equipamento(jogador):
+    print("\n" + "="*40)
+    print("SEU EQUIPAMENTO")
+    print("="*40)
+    
+    if jogador.arma_equipada:
+        nome = ITENS_DB[jogador.arma_equipada]["nome"]
+        bonus = jogador.bonus_melhoria.get(jogador.arma_equipada, 0)
+        print(f"Arma Atual: {nome} (+{bonus} Melhoria)")
+    else:
+        print("Arma Atual: Nenhuma (Vc está lutando com os punhos!)")
+        
+    armas_inv = list(set([item for item in jogador.inventario if ITENS_DB[item].get("tipo") == "arma"]))
+    
+    if armas_inv:
+        print("\nEscolha uma arma pra equipar:")
+        for i, id_arma in enumerate(armas_inv):
+            nome = ITENS_DB[id_arma]["nome"]
+            dano = ITENS_DB[id_arma]["dano"]
+            bonus = jogador.bonus_melhoria.get(id_arma, 0)
+            marca = " [EQUIPADA]" if id_arma == jogador.arma_equipada else ""
+            print(f"[{i+1}] Equipar {nome} (Dano: {dano}+{bonus}){marca}")
+            
+        print(f"[{len(armas_inv)+1}] Lutar Desarmado (Desequipar)")
+        print(f"[{len(armas_inv)+2}] Voltar")
+        
+        escolha = input("Escolha: ")
+        if escolha.isdigit():
+            idx = int(escolha) - 1
+            if 0 <= idx < len(armas_inv):
+                jogador.arma_equipada = armas_inv[idx]
+                print(f"\nVc empunhou a arma: {ITENS_DB[jogador.arma_equipada]['nome']}!")
+            elif idx == len(armas_inv):
+                jogador.arma_equipada = None
+                print("\nVc guardou sua arma.")
+            elif idx == len(armas_inv) + 1:
+                return
+    else:
+        print("\nVc não possui armas no inventário.")
+        input("Pressione Enter pra voltar...")
+
+def entrar_masmorra(jogador):
+    print("\n" + "="*40)
+    print("VC ADENTROU A MASMORRA SOMBRIA")
+    print("Muitos perigos e tesouros aguardam nas profundezas...")
+    print("="*40)
+    
+    andar = 1
+    while jogador.vida_atual > 0:
+        print(f"\n--- ANDAR {andar} ---")
+        time.sleep(1)
+        
+        inimigo = Inimigo(jogador.nivel)
+        
+        inimigo.nivel += (andar // 3)
+        inimigo.forca += (andar // 2)
+        
+        if andar % 5 == 0:
+            print("ATENÇÃO: A sala treme. UM CHEFE APARECEU!")
+            inimigo.nome = "Lorde " + inimigo.nome
+            inimigo.vida_max = int(inimigo.vida_max * 1.5)
+            inimigo.vida_atual = inimigo.vida_max
+            inimigo.forca += 3
+            inimigo.defesa += 2
+            inimigo.ouro_drop *= 3
+            inimigo.xp_drop *= 2
+        
+        print("\n" + "!"*40)
+        print(f"UM {inimigo.nome.upper()} (Nível {inimigo.nivel}) BLOQUEIA O CAMINHO!")
+        print("!"*40)
+        
+        fugiu = False
+        while jogador.vida_atual > 0 and inimigo.vida_atual > 0:
+            time.sleep(1)
+            print(f"\n--- SEU TURNO ---")
+            print(f"Sua Vida: {jogador.vida_atual}/{jogador.vida_max} | Mana: {jogador.mana_atual}/{jogador.mana_max}")
+            print(f"Vida do {inimigo.nome}: {inimigo.vida_atual}/{inimigo.vida_max}")
+            print("[1] Atacar")
+            print("[2] Usar Poção (Requer no inventário)")
+            print("[3] Tentar Fugir da Masmorra")
+            print("[4] Ataque Especial")
+            
+            acao = input("O q vc faz? ")
+            
+            if acao == "1":
+                dano = max(1, jogador.forca + jogador.obter_dano_arma() - inimigo.defesa + random.randint(-2, 2))
+                inimigo.vida_atual -= dano
+                print(f"Vc ataca e causa {dano} de dano!")
+                
+            elif acao == "2":
+                if "pocao_pequena" in jogador.inventario:
+                    jogador.inventario.remove("pocao_pequena")
+                    jogador.curar(ITENS_DB["pocao_pequena"]["cura"])
+                    print("Vc bebeu uma Poção de Cura Pequena.")
+                else:
+                    print("Vc não tem poções no inventário! Perdeu o turno.")
+                    
+            elif acao == "3":
+                chance_fuga = random.randint(1, 100)
+                if chance_fuga > 50:
+                    print("Vc fugiu desesperadamente pra superfície!")
+                    fugiu = True
+                    break
+                else:
+                    print("O inimigo bloqueou a escada de saída!")
+                    
+            elif acao == "4":
+                sucesso = executar_ataque_especial(jogador, inimigo)
+                if not sucesso:
+                    print("Vc hesitou e perdeu o turno.")
+                
+            else:
+                print("Resposta errada. Por favor, digite um número válido entre 1 e 4.")
+                continue
+
+            if inimigo.vida_atual <= 0:
+                print(f"\nVc derrotou o {inimigo.nome}!")
+                print(f"Vc encontrou {inimigo.ouro_drop} de Ouro.")
+                jogador.ouro += inimigo.ouro_drop
+                jogador.ganhar_xp(inimigo.xp_drop)
+                
+                if random.randint(1, 100) <= 40:
+                    print("O inimigo deixou cair um tesouro!")
+                    item_sorteado = random.choice(list(ITENS_DB.keys()))
+                    jogador.pegar_item(item_sorteado)
+                break
+                
+            time.sleep(1)
+            print(f"\n--- TURNO DO INIMIGO ---")
+            dano_inimigo = max(1, inimigo.forca - jogador.defesa + random.randint(-2, 2))
+            jogador.vida_atual -= dano_inimigo
+            print(f"O {inimigo.nome} te ataca e causa {dano_inimigo} de dano!")
+            
+            if jogador.vida_atual <= 0:
+                print("\nVc pereceu na escuridão da Masmorra...")
+                return
+
+        if fugiu or jogador.vida_atual <= 0:
+            break
+            
+        while True:
+            print(f"\nVc limpou o Andar {andar}. As escadas descem ainda mais...")
+            print("[1] Descer pro próximo Andar")
+            print("[2] Retornar pra Cidade com o loot")
+            
+            escolha = input("Sua decisão: ")
+            if escolha == "1":
+                print("Mergulhando mais fundo nas trevas...")
+                andar += 1
+                break
+            elif escolha == "2":
+                print("Vc voltou em segurança pra superfície!")
+                fugiu = True
+                break
+            else:
+                print("Resposta errada. Escolha 1 ou 2.")
+                
+        if fugiu:
+            break
+
+def visitar_vila(jogador):
+    nomes_vilas = ["Vila de Oakhaven", "Povoado de Pedra-Forte", "Refúgio dos Ventos", "Vale Sereno"]
+    nome_vila = random.choice(nomes_vilas)
+    
+    print("\n" + "="*40)
+    print(f"VC ENCONTROU UMA VILA: {nome_vila}")
+    print("Um lugar pacífico, longe dos monstros. O cheiro de pão quente está no ar.")
+    print("="*40)
+    
+    while True:
+        print(f"\nSeu Ouro atual: {jogador.ouro} | Vida: {jogador.vida_atual}/{jogador.vida_max}")
+        print("O q vc deseja fazer na vila?")
+        print("[1] Descansar na Taverna (Custa 20 Ouro - Recupera toda Vida e Mana)")
+        print("[2] Conversar com os aldeões")
+        print("[3] Voltar pra estrada (Sair da Vila)")
+        
+        escolha = input("Escolha: ")
+        
+        if escolha == "1":
+            if jogador.ouro >= 20:
+                if jogador.vida_atual == jogador.vida_max and jogador.mana_atual == jogador.mana_max:
+                    print("O taverneiro ri: 'Vc já está perfeitamente saudável! Guarde seu dinheiro.'")
+                else:
+                    jogador.ouro -= 20
+                    jogador.vida_atual = jogador.vida_max
+                    jogador.mana_atual = jogador.mana_max
+                    print("Vc aluga um quarto e dorme profundamente. Vida e Mana totalmente recuperadas!")
+            else:
+                print("O taverneiro balança a cabeça: 'Sem dinheiro, sem cama. Durma no celeiro.'")
+                
+        elif escolha == "2":
+            evento_aldeao = random.randint(1, 3)
+            if evento_aldeao == 1:
+                print("Ancião da Vila: 'Tome cuidado na Masmorra, jovem. Dizem q a cada 5 andares um lorde terrível espreita...'")
+            elif evento_aldeao == 2:
+                print("Criança: 'Oi moço! Achei isso no chão, pode ficar!' (Vc ganhou 5 de Ouro)")
+                jogador.ouro += 5
+            else:
+                xp_ganho = random.randint(10, 25)
+                print(f"Estudioso local: 'Venha, sente-se. Deixe-me ensinar um pouco sobre a anatomia dos monstros.'")
+                jogador.ganhar_xp(xp_ganho)
+                
+        elif escolha == "3":
+            print("Vc acena pros moradores agradecendo a hospitalidade e volta pra estrada.")
+            break
+            
+        else:
+            print("Resposta errada. Por favor, digite 1, 2 ou 3.")
+
+def acampamento_treinamento(jogador):
+    print("\n" + "="*40)
+    print("BEM-VINDO AO ACAMPAMENTO DE TREINAMENTO")
+    print("Gaste ouro pra treinar atributos ou sue a camisa pra ganhar experiência.")
+    print("="*40)
+    
+    while True:
+        print(f"\nSeu Ouro atual: {jogador.ouro} | Vida: {jogador.vida_atual}/{jogador.vida_max}")
+        print("Opções de Treino:")
+        print("[1] Treinar Força (+1 FOR) - Custa 50 Ouro")
+        print("[2] Treinar Defesa (+1 DEF) - Custa 50 Ouro")
+        print("[3] Treinar no Boneco de Palha (+15 XP) - Custa 5 de Vida")
+        print("[4] Sair do Acampamento")
+        
+        escolha = input("Escolha sua rotina: ")
+        
+        if escolha == "1":
+            if jogador.ouro >= 50:
+                jogador.ouro -= 50
+                jogador.forca += 1
+                jogador.atualizar_peso_maximo()
+                print("Vc puxou mto peso. Sua Força aumentou em 1!")
+            else:
+                print("O instrutor te expulsa. Vc não tem ouro suficiente.")
+        elif escolha == "2":
+            if jogador.ouro >= 50:
+                jogador.ouro -= 50
+                jogador.defesa += 1
+                print("Vc aguentou mta pancada. Sua Defesa aumentou em 1!")
+            else:
+                print("O instrutor te expulsa. Vc não tem ouro suficiente.")
+        elif escolha == "3":
+            if jogador.vida_atual > 5:
+                jogador.vida_atual -= 5
+                print("Vc esmurrou o boneco sem parar. Perdeu 5 de vida devido ao cansaço, mas aprendeu mto.")
+                jogador.ganhar_xp(15)
+            else:
+                print("Vc está mto ferido pra treinar. Vá se curar primeiro.")
+        elif escolha == "4":
+            print("Vc terminou seu treino por hj e voltou pro caminho.")
+            break
+        else:
+            print("Resposta errada. Digite 1, 2, 3 ou 4.")
+
+def iniciar_jogo():
+    print("ALBION ONLINE É UM MMO RPG... não, pera, eu já vi isso antes")
+    print("CORRIGINDO, BEM-VINDO AO REAL ART ONLINE OU RAO")
+    
+    jogador = carregar_jogo()
+    
+    if not jogador:
+        print("\n--- CRIAÇÃO DE PERSONAGEM ---")
+        nome = input("Qual seria o seu nome?\n ")
+        print("Não, pera cara, não responde, deixa eu adivinhar... O seu nome é..\n", nome)
+        
+        # --- SELEÇÃO DE RAÇA COM NÚMEROS ---
+        racas_validas = ["Humano", "Elfo", "Anão", "Orc", "Draconato", "Anjo", "Demonio", "cyborg"]
+        raca = ""
+        while True:
+            print("\nRaças disponíveis:")
+            for i, r in enumerate(racas_validas):
+                print(f"[{i+1}] {r}")
+                
+            escolha_raca = input("Escolha o número da sua raça: ")
+            
+            if escolha_raca.isdigit() and 1 <= int(escolha_raca) <= len(racas_validas):
+                raca = racas_validas[int(escolha_raca) - 1]
+                print(f"Você escolheu: {raca}")
+                break
+            else:
+                print("Resposta errada. Por favor, digite um número válido da lista.")
+                
+        # --- SELEÇÃO DE CLASSE COM NÚMEROS ---
+        classes_validas = ["Guerreiro", "Mago", "saqueador", "Paladino", "Arqueiro", "cavaleiro", ""]
+        classe = ""
+        while True:
+            print("\nClasses disponíveis:")
+            for i, c in enumerate(classes_validas):
+                print(f"[{i+1}] {c}")
+                
+            escolha_classe = input("Escolha o número da sua classe: ")
+            
+            if escolha_classe.isdigit() and 1 <= int(escolha_classe) <= len(classes_validas):
+                classe = classes_validas[int(escolha_classe) - 1]
+                print(f"Você escolheu: {classe}")
+                break
+            else:
+                print("Resposta errada. Por favor, digite um número válido da lista.")
+                
+        jogador = Personagem(nome, raca, classe)
+    
+    while jogador.vida_atual > 0:
+        print("\nO q vc deseja fazer?")
+        print("[1] Ver Status")
+        print("[2] Explorar Campos (Batalha, Itens ou Vilas)")
+        print("[3] Visitar a Loja")
+        print("[4] Entrar na Masmorra (Andares Infinitos)")
+        print("[5] Acampamento de Treinamento")
+        print("[6] Equipar Arma")
+        print("[7] Visitar o Ferreiro (Melhorar Armas)")
+        print("[8] Salvar Jogo")
+        print("[9] Sair")
+        
+        acao = input("Escolha: ")
+        
+        if acao == "1":
+            jogador.mostrar_status()
+        elif acao == "2":
+            evento = random.randint(1, 100)
+            if evento <= 60:
+                iniciar_combate(jogador)
+            elif evento <= 85:
+                print("\nVc encontrou algo no chão enquanto explorava...")
+                item_sorteado = random.choice(list(ITENS_DB.keys()))
+                jogador.pegar_item(item_sorteado)
+            else:
+                visitar_vila(jogador)
+        elif acao == "3":
+            visitar_loja(jogador)
+        elif acao == "4":
+            entrar_masmorra(jogador)
+        elif acao == "5":
+            acampamento_treinamento(jogador)
+        elif acao == "6":
+            gerenciar_equipamento(jogador)
+        elif acao == "7":
+            visitar_ferreiro(jogador)
+        elif acao == "8":
+            salvar_jogo(jogador)
+        elif acao == "9":
+            print("Saindo do jogo. Até a próxima aventura!")
+            break
+        else:
+            print("Resposta errada. Escolha um número válido.")
+
+# Inicia o jogo
+if __name__ == "__main__":
+    iniciar_jogo()
