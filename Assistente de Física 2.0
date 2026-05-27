@@ -1,0 +1,1357 @@
+import math
+
+# ============================================================
+#          ASSISTENTE DE FÍSICA - ENSINO MÉDIO / BÁSICO
+# ============================================================
+
+def linha(char="=", n=55):
+    print(char * n)
+
+def titulo(texto):
+    linha()
+    print(f"  {texto}")
+    linha()
+
+def resultado(var, valor, unidade, extra=None):
+    print(f"\n  => {var} = {valor:.4g} {unidade}")
+    if extra:
+        print(f"     ({extra})")
+    print()
+
+def entrada(prompt):
+    while True:
+        try:
+            return float(input(f"  {prompt}: "))
+        except ValueError:
+            print("  !! Valor inválido. Digite um número.")
+
+def opcao_variavel(variaveis: dict):
+    print("\n  O que deseja calcular?")
+    for k, v in variaveis.items():
+        print(f"    [{k}] {v}")
+    return input("\n  Opção: ").strip().lower()
+
+# ----------------------------------------------------------------
+# 1. VELOCIDADE MÉDIA
+# ----------------------------------------------------------------
+def velocidade_media():
+    titulo("1. Velocidade Média   v = Δs / Δt")
+    op = opcao_variavel({"v": "Velocidade média (m/s)",
+                          "s": "Deslocamento Δs (m)",
+                          "t": "Intervalo de tempo Δt (s)"})
+    if op == "v":
+        ds = entrada("Deslocamento Δs (m)")
+        dt = entrada("Intervalo de tempo Δt (s)")
+        v = ds / dt
+        resultado("v", v, "m/s", f"{v*3.6:.4g} km/h")
+    elif op == "s":
+        v = entrada("Velocidade v (m/s)")
+        dt = entrada("Intervalo de tempo Δt (s)")
+        resultado("Δs", v * dt, "m")
+    elif op == "t":
+        ds = entrada("Deslocamento Δs (m)")
+        v = entrada("Velocidade v (m/s)")
+        resultado("Δt", ds / v, "s")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 2. SEGUNDA LEI DE NEWTON
+# ----------------------------------------------------------------
+def segunda_lei_newton():
+    titulo("2. Segunda Lei de Newton   F = m · a")
+    op = opcao_variavel({"f": "Força resultante F (N)",
+                          "m": "Massa m (kg)",
+                          "a": "Aceleração a (m/s²)"})
+    if op == "f":
+        m = entrada("Massa m (kg)")
+        a = entrada("Aceleração a (m/s²)")
+        resultado("F", m * a, "N")
+    elif op == "m":
+        f = entrada("Força F (N)")
+        a = entrada("Aceleração a (m/s²)")
+        resultado("m", f / a, "kg")
+    elif op == "a":
+        f = entrada("Força F (N)")
+        m = entrada("Massa m (kg)")
+        resultado("a", f / m, "m/s²")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 3. ENERGIA CINÉTICA
+# ----------------------------------------------------------------
+def energia_cinetica():
+    titulo("3. Energia Cinética   Ec = m·v² / 2")
+    op = opcao_variavel({"e": "Energia cinética Ec (J)",
+                          "m": "Massa m (kg)",
+                          "v": "Velocidade v (m/s)"})
+    if op == "e":
+        m = entrada("Massa m (kg)")
+        v = entrada("Velocidade v (m/s)")
+        resultado("Ec", 0.5 * m * v**2, "J")
+    elif op == "m":
+        ec = entrada("Energia cinética Ec (J)")
+        v = entrada("Velocidade v (m/s)")
+        resultado("m", 2 * ec / v**2, "kg")
+    elif op == "v":
+        ec = entrada("Energia cinética Ec (J)")
+        m = entrada("Massa m (kg)")
+        resultado("v", math.sqrt(2 * ec / m), "m/s")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 4. ENERGIA POTENCIAL GRAVITACIONAL
+# ----------------------------------------------------------------
+def energia_potencial_grav():
+    titulo("4. Energia Potencial Gravitacional   Ep = m·g·h")
+    g_padrao = 9.8
+    print(f"  (g padrão = {g_padrao} m/s² — pressione Enter para usar)")
+    op = opcao_variavel({"e": "Energia potencial Ep (J)",
+                          "m": "Massa m (kg)",
+                          "h": "Altura h (m)",
+                          "g": "Aceleração gravitacional g (m/s²)"})
+    if op == "e":
+        m = entrada("Massa m (kg)")
+        g_in = input(f"  g (m/s²) [Enter = {g_padrao}]: ").strip()
+        g = float(g_in) if g_in else g_padrao
+        h = entrada("Altura h (m)")
+        resultado("Ep", m * g * h, "J")
+    elif op == "m":
+        ep = entrada("Energia potencial Ep (J)")
+        g_in = input(f"  g (m/s²) [Enter = {g_padrao}]: ").strip()
+        g = float(g_in) if g_in else g_padrao
+        h = entrada("Altura h (m)")
+        resultado("m", ep / (g * h), "kg")
+    elif op == "h":
+        ep = entrada("Energia potencial Ep (J)")
+        m = entrada("Massa m (kg)")
+        g_in = input(f"  g (m/s²) [Enter = {g_padrao}]: ").strip()
+        g = float(g_in) if g_in else g_padrao
+        resultado("h", ep / (m * g), "m")
+    elif op == "g":
+        ep = entrada("Energia potencial Ep (J)")
+        m = entrada("Massa m (kg)")
+        h = entrada("Altura h (m)")
+        resultado("g", ep / (m * h), "m/s²")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 5. PESO DE UM CORPO
+# ----------------------------------------------------------------
+def peso_corpo():
+    titulo("5. Peso de um Corpo   P = m·g")
+    g_padrao = 9.8
+    op = opcao_variavel({"p": "Peso P (N)",
+                          "m": "Massa m (kg)",
+                          "g": "Aceleração gravitacional g (m/s²)"})
+    if op == "p":
+        m = entrada("Massa m (kg)")
+        g_in = input(f"  g (m/s²) [Enter = {g_padrao}]: ").strip()
+        g = float(g_in) if g_in else g_padrao
+        resultado("P", m * g, "N")
+    elif op == "m":
+        p = entrada("Peso P (N)")
+        g_in = input(f"  g (m/s²) [Enter = {g_padrao}]: ").strip()
+        g = float(g_in) if g_in else g_padrao
+        resultado("m", p / g, "kg")
+    elif op == "g":
+        p = entrada("Peso P (N)")
+        m = entrada("Massa m (kg)")
+        resultado("g", p / m, "m/s²")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 6. MOVIMENTO RETILÍNEO UNIFORME (MRU)
+# ----------------------------------------------------------------
+def mru():
+    titulo("6. MRU   s = s₀ + v·t")
+    op = opcao_variavel({"s": "Posição final s (m)",
+                          "s0": "Posição inicial s₀ (m)",
+                          "v": "Velocidade v (m/s)",
+                          "t": "Tempo t (s)"})
+    if op == "s":
+        s0 = entrada("Posição inicial s₀ (m)")
+        v = entrada("Velocidade v (m/s)")
+        t = entrada("Tempo t (s)")
+        resultado("s", s0 + v * t, "m")
+    elif op == "s0":
+        s = entrada("Posição final s (m)")
+        v = entrada("Velocidade v (m/s)")
+        t = entrada("Tempo t (s)")
+        resultado("s₀", s - v * t, "m")
+    elif op == "v":
+        s = entrada("Posição final s (m)")
+        s0 = entrada("Posição inicial s₀ (m)")
+        t = entrada("Tempo t (s)")
+        resultado("v", (s - s0) / t, "m/s")
+    elif op == "t":
+        s = entrada("Posição final s (m)")
+        s0 = entrada("Posição inicial s₀ (m)")
+        v = entrada("Velocidade v (m/s)")
+        resultado("t", (s - s0) / v, "s")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 7. MOVIMENTO UNIFORMEMENTE VARIADO (MUV)
+# ----------------------------------------------------------------
+def muv():
+    titulo("7. MUV — Equações do movimento")
+    print("  Escolha a equação:")
+    print("    [1] Velocidade:  v = v₀ + a·t")
+    print("    [2] Posição:     s = s₀ + v₀·t + a·t²/2")
+    print("    [3] Torricelli:  v² = v₀² + 2·a·Δs")
+    eq = input("  Equação: ").strip()
+
+    if eq == "1":
+        op = opcao_variavel({"v": "Velocidade final v (m/s)",
+                              "v0": "Velocidade inicial v₀ (m/s)",
+                              "a": "Aceleração a (m/s²)",
+                              "t": "Tempo t (s)"})
+        if op == "v":
+            v0 = entrada("v₀ (m/s)"); a = entrada("a (m/s²)"); t = entrada("t (s)")
+            resultado("v", v0 + a * t, "m/s")
+        elif op == "v0":
+            v = entrada("v (m/s)"); a = entrada("a (m/s²)"); t = entrada("t (s)")
+            resultado("v₀", v - a * t, "m/s")
+        elif op == "a":
+            v = entrada("v (m/s)"); v0 = entrada("v₀ (m/s)"); t = entrada("t (s)")
+            resultado("a", (v - v0) / t, "m/s²")
+        elif op == "t":
+            v = entrada("v (m/s)"); v0 = entrada("v₀ (m/s)"); a = entrada("a (m/s²)")
+            resultado("t", (v - v0) / a, "s")
+
+    elif eq == "2":
+        op = opcao_variavel({"s": "Posição final s (m)",
+                              "s0": "Posição inicial s₀ (m)",
+                              "v0": "Velocidade inicial v₀ (m/s)",
+                              "a": "Aceleração a (m/s²)",
+                              "t": "Tempo t (s)"})
+        if op == "s":
+            s0 = entrada("s₀ (m)"); v0 = entrada("v₀ (m/s)"); a = entrada("a (m/s²)"); t = entrada("t (s)")
+            resultado("s", s0 + v0*t + 0.5*a*t**2, "m")
+        elif op == "s0":
+            s = entrada("s (m)"); v0 = entrada("v₀ (m/s)"); a = entrada("a (m/s²)"); t = entrada("t (s)")
+            resultado("s₀", s - v0*t - 0.5*a*t**2, "m")
+        elif op == "v0":
+            s = entrada("s (m)"); s0 = entrada("s₀ (m)"); a = entrada("a (m/s²)"); t = entrada("t (s)")
+            resultado("v₀", (s - s0 - 0.5*a*t**2) / t, "m/s")
+        elif op == "a":
+            s = entrada("s (m)"); s0 = entrada("s₀ (m)"); v0 = entrada("v₀ (m/s)"); t = entrada("t (s)")
+            resultado("a", 2*(s - s0 - v0*t) / t**2, "m/s²")
+        elif op == "t":
+            print("  Requer solução de equação quadrática.")
+            s = entrada("s (m)"); s0 = entrada("s₀ (m)"); v0 = entrada("v₀ (m/s)"); a = entrada("a (m/s²)")
+            A = 0.5*a; B = v0; C = s0 - s
+            disc = B**2 - 4*A*C
+            if disc < 0:
+                print("  Sem solução real para t.")
+            else:
+                t1 = (-B + math.sqrt(disc)) / (2*A)
+                t2 = (-B - math.sqrt(disc)) / (2*A)
+                sols = [t for t in [t1, t2] if t >= 0]
+                if sols:
+                    for i, t in enumerate(sols, 1):
+                        print(f"  => t{i} = {t:.4g} s")
+                else:
+                    print("  Sem solução positiva para t.")
+
+    elif eq == "3":
+        op = opcao_variavel({"v": "Velocidade final v (m/s)",
+                              "v0": "Velocidade inicial v₀ (m/s)",
+                              "a": "Aceleração a (m/s²)",
+                              "ds": "Deslocamento Δs (m)"})
+        if op == "v":
+            v0 = entrada("v₀ (m/s)"); a = entrada("a (m/s²)"); ds = entrada("Δs (m)")
+            val = v0**2 + 2*a*ds
+            if val < 0:
+                print("  Raiz negativa — verifique os dados.")
+            else:
+                resultado("v", math.sqrt(val), "m/s")
+        elif op == "v0":
+            v = entrada("v (m/s)"); a = entrada("a (m/s²)"); ds = entrada("Δs (m)")
+            val = v**2 - 2*a*ds
+            if val < 0:
+                print("  Raiz negativa — verifique os dados.")
+            else:
+                resultado("v₀", math.sqrt(val), "m/s")
+        elif op == "a":
+            v = entrada("v (m/s)"); v0 = entrada("v₀ (m/s)"); ds = entrada("Δs (m)")
+            resultado("a", (v**2 - v0**2) / (2*ds), "m/s²")
+        elif op == "ds":
+            v = entrada("v (m/s)"); v0 = entrada("v₀ (m/s)"); a = entrada("a (m/s²)")
+            resultado("Δs", (v**2 - v0**2) / (2*a), "m")
+    else:
+        print("  Equação inválida.")
+
+# ----------------------------------------------------------------
+# 8. TRABALHO DE UMA FORÇA
+# ----------------------------------------------------------------
+def trabalho_forca():
+    titulo("8. Trabalho de uma Força   W = F·d·cos(θ)")
+    op = opcao_variavel({"w": "Trabalho W (J)",
+                          "f": "Força F (N)",
+                          "d": "Deslocamento d (m)",
+                          "a": "Ângulo θ (graus)"})
+    if op == "w":
+        f = entrada("Força F (N)"); d = entrada("Deslocamento d (m)")
+        ang = entrada("Ângulo θ (graus)")
+        resultado("W", f * d * math.cos(math.radians(ang)), "J")
+    elif op == "f":
+        w = entrada("Trabalho W (J)"); d = entrada("Deslocamento d (m)")
+        ang = entrada("Ângulo θ (graus)")
+        resultado("F", w / (d * math.cos(math.radians(ang))), "N")
+    elif op == "d":
+        w = entrada("Trabalho W (J)"); f = entrada("Força F (N)")
+        ang = entrada("Ângulo θ (graus)")
+        resultado("d", w / (f * math.cos(math.radians(ang))), "m")
+    elif op == "a":
+        w = entrada("Trabalho W (J)"); f = entrada("Força F (N)"); d = entrada("Deslocamento d (m)")
+        cos_ang = w / (f * d)
+        if abs(cos_ang) > 1:
+            print("  Sem solução real para θ.")
+        else:
+            resultado("θ", math.degrees(math.acos(cos_ang)), "graus")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 9. POTÊNCIA
+# ----------------------------------------------------------------
+def potencia():
+    titulo("9. Potência   P = W / t  (ou P = F·v)")
+    print("  Escolha a equação:")
+    print("    [1] P = W / t")
+    print("    [2] P = F · v")
+    eq = input("  Equação: ").strip()
+    if eq == "1":
+        op = opcao_variavel({"p": "Potência P (W)",
+                              "w": "Trabalho W (J)",
+                              "t": "Tempo t (s)"})
+        if op == "p":
+            w = entrada("Trabalho W (J)"); t = entrada("Tempo t (s)")
+            resultado("P", w / t, "W", f"{w/t/1000:.4g} kW")
+        elif op == "w":
+            p = entrada("Potência P (W)"); t = entrada("Tempo t (s)")
+            resultado("W", p * t, "J")
+        elif op == "t":
+            w = entrada("Trabalho W (J)"); p = entrada("Potência P (W)")
+            resultado("t", w / p, "s")
+    elif eq == "2":
+        op = opcao_variavel({"p": "Potência P (W)",
+                              "f": "Força F (N)",
+                              "v": "Velocidade v (m/s)"})
+        if op == "p":
+            f = entrada("Força F (N)"); v = entrada("Velocidade v (m/s)")
+            resultado("P", f * v, "W")
+        elif op == "f":
+            p = entrada("Potência P (W)"); v = entrada("Velocidade v (m/s)")
+            resultado("F", p / v, "N")
+        elif op == "v":
+            p = entrada("Potência P (W)"); f = entrada("Força F (N)")
+            resultado("v", p / f, "m/s")
+    else:
+        print("  Equação inválida.")
+
+# ----------------------------------------------------------------
+# 10. EQUAÇÃO FUNDAMENTAL DA ONDULATÓRIA
+# ----------------------------------------------------------------
+def ondulatoria():
+    titulo("10. Ondulatória   v = λ · f")
+    op = opcao_variavel({"v": "Velocidade da onda v (m/s)",
+                          "l": "Comprimento de onda λ (m)",
+                          "f": "Frequência f (Hz)"})
+    if op == "v":
+        lam = entrada("Comprimento de onda λ (m)"); f = entrada("Frequência f (Hz)")
+        resultado("v", lam * f, "m/s")
+    elif op == "l":
+        v = entrada("Velocidade v (m/s)"); f = entrada("Frequência f (Hz)")
+        resultado("λ", v / f, "m")
+    elif op == "f":
+        v = entrada("Velocidade v (m/s)"); lam = entrada("Comprimento de onda λ (m)")
+        resultado("f", v / lam, "Hz")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 11. EQUAÇÃO DE EINSTEIN  E = mc²
+# ----------------------------------------------------------------
+def einstein():
+    titulo("11. Equação de Einstein   E = m·c²")
+    C = 3e8
+    op = opcao_variavel({"e": "Energia E (J)",
+                          "m": "Massa m (kg)"})
+    if op == "e":
+        m = entrada("Massa m (kg)")
+        resultado("E", m * C**2, "J", f"{m*C**2:.4e} J")
+    elif op == "m":
+        e = entrada("Energia E (J)")
+        resultado("m", e / C**2, "kg")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 12. LEI DE GRAVITAÇÃO UNIVERSAL
+# ----------------------------------------------------------------
+def gravitacao_universal():
+    titulo("12. Gravitação Universal   F = G·m₁·m₂ / d²")
+    G = 6.674e-11
+    print(f"  (G = {G} N·m²/kg²)")
+    op = opcao_variavel({"f": "Força gravitacional F (N)",
+                          "m1": "Massa m₁ (kg)",
+                          "m2": "Massa m₂ (kg)",
+                          "d": "Distância d (m)"})
+    if op == "f":
+        m1 = entrada("m₁ (kg)"); m2 = entrada("m₂ (kg)"); d = entrada("d (m)")
+        resultado("F", G * m1 * m2 / d**2, "N")
+    elif op == "m1":
+        f = entrada("F (N)"); m2 = entrada("m₂ (kg)"); d = entrada("d (m)")
+        resultado("m₁", f * d**2 / (G * m2), "kg")
+    elif op == "m2":
+        f = entrada("F (N)"); m1 = entrada("m₁ (kg)"); d = entrada("d (m)")
+        resultado("m₂", f * d**2 / (G * m1), "kg")
+    elif op == "d":
+        f = entrada("F (N)"); m1 = entrada("m₁ (kg)"); m2 = entrada("m₂ (kg)")
+        resultado("d", math.sqrt(G * m1 * m2 / f), "m")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 13. LEI DE COULOMB
+# ----------------------------------------------------------------
+def coulomb():
+    titulo("13. Lei de Coulomb   F = k·|q₁·q₂| / d²")
+    k = 9e9
+    print(f"  (k = {k} N·m²/C²)")
+    op = opcao_variavel({"f": "Força elétrica F (N)",
+                          "q1": "Carga q₁ (C)",
+                          "q2": "Carga q₂ (C)",
+                          "d": "Distância d (m)"})
+    if op == "f":
+        q1 = entrada("q₁ (C)"); q2 = entrada("q₂ (C)"); d = entrada("d (m)")
+        resultado("F", k * abs(q1 * q2) / d**2, "N")
+    elif op == "q1":
+        f = entrada("F (N)"); q2 = entrada("q₂ (C)"); d = entrada("d (m)")
+        resultado("q₁", f * d**2 / (k * abs(q2)), "C")
+    elif op == "q2":
+        f = entrada("F (N)"); q1 = entrada("q₁ (C)"); d = entrada("d (m)")
+        resultado("q₂", f * d**2 / (k * abs(q1)), "C")
+    elif op == "d":
+        f = entrada("F (N)"); q1 = entrada("q₁ (C)"); q2 = entrada("q₂ (C)")
+        resultado("d", math.sqrt(k * abs(q1 * q2) / f), "m")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 14. LEI DE OHM
+# ----------------------------------------------------------------
+def lei_ohm():
+    titulo("14. Lei de Ohm   V = R · I")
+    op = opcao_variavel({"v": "Tensão V (V)",
+                          "r": "Resistência R (Ω)",
+                          "i": "Corrente I (A)"})
+    if op == "v":
+        r = entrada("R (Ω)"); i = entrada("I (A)")
+        resultado("V", r * i, "V")
+    elif op == "r":
+        v = entrada("V (V)"); i = entrada("I (A)")
+        resultado("R", v / i, "Ω")
+    elif op == "i":
+        v = entrada("V (V)"); r = entrada("R (Ω)")
+        resultado("I", v / r, "A")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 15. POTÊNCIA ELÉTRICA
+# ----------------------------------------------------------------
+def potencia_eletrica():
+    titulo("15. Potência Elétrica   P = V·I = I²·R = V²/R")
+    print("  Escolha a equação:")
+    print("    [1] P = V · I")
+    print("    [2] P = I² · R")
+    print("    [3] P = V² / R")
+    eq = input("  Equação: ").strip()
+    if eq == "1":
+        op = opcao_variavel({"p": "P (W)", "v": "V (V)", "i": "I (A)"})
+        if op == "p":
+            resultado("P", entrada("V (V)") * entrada("I (A)"), "W")
+        elif op == "v":
+            resultado("V", entrada("P (W)") / entrada("I (A)"), "V")
+        elif op == "i":
+            resultado("I", entrada("P (W)") / entrada("V (V)"), "A")
+    elif eq == "2":
+        op = opcao_variavel({"p": "P (W)", "i": "I (A)", "r": "R (Ω)"})
+        if op == "p":
+            i = entrada("I (A)"); r = entrada("R (Ω)")
+            resultado("P", i**2 * r, "W")
+        elif op == "i":
+            p = entrada("P (W)"); r = entrada("R (Ω)")
+            resultado("I", math.sqrt(p / r), "A")
+        elif op == "r":
+            p = entrada("P (W)"); i = entrada("I (A)")
+            resultado("R", p / i**2, "Ω")
+    elif eq == "3":
+        op = opcao_variavel({"p": "P (W)", "v": "V (V)", "r": "R (Ω)"})
+        if op == "p":
+            v = entrada("V (V)"); r = entrada("R (Ω)")
+            resultado("P", v**2 / r, "W")
+        elif op == "v":
+            p = entrada("P (W)"); r = entrada("R (Ω)")
+            resultado("V", math.sqrt(p * r), "V")
+        elif op == "r":
+            p = entrada("P (W)"); v = entrada("V (V)")
+            resultado("R", v**2 / p, "Ω")
+    else:
+        print("  Equação inválida.")
+
+# ----------------------------------------------------------------
+# 16. PRESSÃO
+# ----------------------------------------------------------------
+def pressao():
+    titulo("16. Pressão   P = F / A")
+    op = opcao_variavel({"p": "Pressão P (Pa)",
+                          "f": "Força F (N)",
+                          "a": "Área A (m²)"})
+    if op == "p":
+        resultado("P", entrada("F (N)") / entrada("A (m²)"), "Pa")
+    elif op == "f":
+        resultado("F", entrada("P (Pa)") * entrada("A (m²)"), "N")
+    elif op == "a":
+        resultado("A", entrada("F (N)") / entrada("P (Pa)"), "m²")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 17. DENSIDADE
+# ----------------------------------------------------------------
+def densidade():
+    titulo("17. Densidade   ρ = m / V")
+    op = opcao_variavel({"d": "Densidade ρ (kg/m³)",
+                          "m": "Massa m (kg)",
+                          "v": "Volume V (m³)"})
+    if op == "d":
+        resultado("ρ", entrada("m (kg)") / entrada("V (m³)"), "kg/m³")
+    elif op == "m":
+        resultado("m", entrada("ρ (kg/m³)") * entrada("V (m³)"), "kg")
+    elif op == "v":
+        resultado("V", entrada("m (kg)") / entrada("ρ (kg/m³)"), "m³")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 18. DILATAÇÃO TÉRMICA LINEAR
+# ----------------------------------------------------------------
+def dilatacao_termica():
+    titulo("18. Dilatação Térmica Linear   ΔL = L₀·α·ΔT")
+    op = opcao_variavel({"dl": "Variação de comprimento ΔL (m)",
+                          "l0": "Comprimento inicial L₀ (m)",
+                          "a": "Coef. dilatação α (1/°C)",
+                          "dt": "Variação de temperatura ΔT (°C)"})
+    if op == "dl":
+        l0 = entrada("L₀ (m)"); a = entrada("α (1/°C)"); dt = entrada("ΔT (°C)")
+        resultado("ΔL", l0 * a * dt, "m")
+    elif op == "l0":
+        dl = entrada("ΔL (m)"); a = entrada("α (1/°C)"); dt = entrada("ΔT (°C)")
+        resultado("L₀", dl / (a * dt), "m")
+    elif op == "a":
+        dl = entrada("ΔL (m)"); l0 = entrada("L₀ (m)"); dt = entrada("ΔT (°C)")
+        resultado("α", dl / (l0 * dt), "1/°C")
+    elif op == "dt":
+        dl = entrada("ΔL (m)"); l0 = entrada("L₀ (m)"); a = entrada("α (1/°C)")
+        resultado("ΔT", dl / (l0 * a), "°C")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 19. CALOR SENSÍVEL
+# ----------------------------------------------------------------
+def calor_sensivel():
+    titulo("19. Calor Sensível   Q = m·c·ΔT")
+    op = opcao_variavel({"q": "Calor Q (J)",
+                          "m": "Massa m (kg)",
+                          "c": "Calor específico c (J/kg·°C)",
+                          "dt": "Variação de temp. ΔT (°C)"})
+    if op == "q":
+        m = entrada("m (kg)"); c = entrada("c (J/kg·°C)"); dt = entrada("ΔT (°C)")
+        resultado("Q", m * c * dt, "J")
+    elif op == "m":
+        q = entrada("Q (J)"); c = entrada("c (J/kg·°C)"); dt = entrada("ΔT (°C)")
+        resultado("m", q / (c * dt), "kg")
+    elif op == "c":
+        q = entrada("Q (J)"); m = entrada("m (kg)"); dt = entrada("ΔT (°C)")
+        resultado("c", q / (m * dt), "J/(kg·°C)")
+    elif op == "dt":
+        q = entrada("Q (J)"); m = entrada("m (kg)"); c = entrada("c (J/kg·°C)")
+        resultado("ΔT", q / (m * c), "°C")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 20. PERÍODO E FREQUÊNCIA
+# ----------------------------------------------------------------
+def periodo_frequencia():
+    titulo("20. Período e Frequência   T = 1/f")
+    op = opcao_variavel({"t": "Período T (s)",
+                          "f": "Frequência f (Hz)"})
+    if op == "t":
+        resultado("T", 1 / entrada("f (Hz)"), "s")
+    elif op == "f":
+        resultado("f", 1 / entrada("T (s)"), "Hz")
+    else:
+        print("  Opção inválida.")
+
+# ================================================================
+#                  NOVAS FÓRMULAS ADICIONADAS
+# ================================================================
+
+# ----------------------------------------------------------------
+# 21. CALOR LATENTE   Q = m · L
+# ----------------------------------------------------------------
+def calor_latente():
+    titulo("21. Calor Latente   Q = m · L")
+    print("  Usado em mudanças de estado (fusão, vaporização, etc.)")
+    print("  Calores latentes comuns (J/kg):")
+    print("    Fusão da água:        334 000")
+    print("    Vaporização da água: 2 260 000")
+    op = opcao_variavel({"q": "Calor Q (J)",
+                          "m": "Massa m (kg)",
+                          "l": "Calor latente L (J/kg)"})
+    if op == "q":
+        m = entrada("m (kg)"); L = entrada("L (J/kg)")
+        resultado("Q", m * L, "J")
+    elif op == "m":
+        q = entrada("Q (J)"); L = entrada("L (J/kg)")
+        resultado("m", q / L, "kg")
+    elif op == "l":
+        q = entrada("Q (J)"); m = entrada("m (kg)")
+        resultado("L", q / m, "J/kg")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 22. EQUAÇÃO DE ESTADO DOS GASES IDEAIS   P·V = n·R·T
+# ----------------------------------------------------------------
+def gases_ideais():
+    titulo("22. Gases Ideais   P·V = n·R·T")
+    R = 8.314  # J/(mol·K)
+    print(f"  (R = {R} J/(mol·K)  |  T em Kelvin = °C + 273,15)")
+    op = opcao_variavel({"p": "Pressão P (Pa)",
+                          "v": "Volume V (m³)",
+                          "n": "Quantidade de matéria n (mol)",
+                          "t": "Temperatura T (K)"})
+    if op == "p":
+        v = entrada("V (m³)"); n = entrada("n (mol)"); T = entrada("T (K)")
+        resultado("P", n * R * T / v, "Pa")
+    elif op == "v":
+        p = entrada("P (Pa)"); n = entrada("n (mol)"); T = entrada("T (K)")
+        resultado("V", n * R * T / p, "m³")
+    elif op == "n":
+        p = entrada("P (Pa)"); v = entrada("V (m³)"); T = entrada("T (K)")
+        resultado("n", p * v / (R * T), "mol")
+    elif op == "t":
+        p = entrada("P (Pa)"); v = entrada("V (m³)"); n = entrada("n (mol)")
+        resultado("T", p * v / (n * R), "K")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 23. LEI DE BOYLE   P₁·V₁ = P₂·V₂  (T = cte)
+# ----------------------------------------------------------------
+def lei_boyle():
+    titulo("23. Lei de Boyle   P₁·V₁ = P₂·V₂  (T constante)")
+    op = opcao_variavel({"p2": "Pressão final P₂ (Pa)",
+                          "v2": "Volume final V₂ (m³)",
+                          "p1": "Pressão inicial P₁ (Pa)",
+                          "v1": "Volume inicial V₁ (m³)"})
+    if op == "p2":
+        p1 = entrada("P₁ (Pa)"); v1 = entrada("V₁ (m³)"); v2 = entrada("V₂ (m³)")
+        resultado("P₂", p1 * v1 / v2, "Pa")
+    elif op == "v2":
+        p1 = entrada("P₁ (Pa)"); v1 = entrada("V₁ (m³)"); p2 = entrada("P₂ (Pa)")
+        resultado("V₂", p1 * v1 / p2, "m³")
+    elif op == "p1":
+        p2 = entrada("P₂ (Pa)"); v1 = entrada("V₁ (m³)"); v2 = entrada("V₂ (m³)")
+        resultado("P₁", p2 * v2 / v1, "Pa")
+    elif op == "v1":
+        p1 = entrada("P₁ (Pa)"); p2 = entrada("P₂ (Pa)"); v2 = entrada("V₂ (m³)")
+        resultado("V₁", p2 * v2 / p1, "m³")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 24. LEI DE CHARLES   V₁/T₁ = V₂/T₂  (P = cte)
+# ----------------------------------------------------------------
+def lei_charles():
+    titulo("24. Lei de Charles   V₁/T₁ = V₂/T₂  (P constante)")
+    print("  (T em Kelvin = °C + 273,15)")
+    op = opcao_variavel({"v2": "Volume final V₂ (m³)",
+                          "t2": "Temperatura final T₂ (K)",
+                          "v1": "Volume inicial V₁ (m³)",
+                          "t1": "Temperatura inicial T₁ (K)"})
+    if op == "v2":
+        v1 = entrada("V₁ (m³)"); t1 = entrada("T₁ (K)"); t2 = entrada("T₂ (K)")
+        resultado("V₂", v1 * t2 / t1, "m³")
+    elif op == "t2":
+        v1 = entrada("V₁ (m³)"); t1 = entrada("T₁ (K)"); v2 = entrada("V₂ (m³)")
+        resultado("T₂", v2 * t1 / v1, "K")
+    elif op == "v1":
+        v2 = entrada("V₂ (m³)"); t1 = entrada("T₁ (K)"); t2 = entrada("T₂ (K)")
+        resultado("V₁", v2 * t1 / t2, "m³")
+    elif op == "t1":
+        v1 = entrada("V₁ (m³)"); v2 = entrada("V₂ (m³)"); t2 = entrada("T₂ (K)")
+        resultado("T₁", v1 * t2 / v2, "K")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 25. QUANTIDADE DE MOVIMENTO / IMPULSO   Q = m·v  |  I = F·Δt
+# ----------------------------------------------------------------
+def quantidade_movimento():
+    titulo("25. Quantidade de Movimento e Impulso")
+    print("  Escolha a equação:")
+    print("    [1] Quantidade de movimento:  Q = m · v")
+    print("    [2] Impulso:                  I = F · Δt")
+    print("    [3] Teorema Impulso-Momento:  I = ΔQ = m·v - m·v₀")
+    eq = input("  Equação: ").strip()
+    if eq == "1":
+        op = opcao_variavel({"q": "Q (kg·m/s)", "m": "Massa m (kg)", "v": "Velocidade v (m/s)"})
+        if op == "q":
+            resultado("Q", entrada("m (kg)") * entrada("v (m/s)"), "kg·m/s")
+        elif op == "m":
+            resultado("m", entrada("Q (kg·m/s)") / entrada("v (m/s)"), "kg")
+        elif op == "v":
+            resultado("v", entrada("Q (kg·m/s)") / entrada("m (kg)"), "m/s")
+    elif eq == "2":
+        op = opcao_variavel({"i": "Impulso I (N·s)", "f": "Força F (N)", "t": "Tempo Δt (s)"})
+        if op == "i":
+            resultado("I", entrada("F (N)") * entrada("Δt (s)"), "N·s")
+        elif op == "f":
+            resultado("F", entrada("I (N·s)") / entrada("Δt (s)"), "N")
+        elif op == "t":
+            resultado("Δt", entrada("I (N·s)") / entrada("F (N)"), "s")
+    elif eq == "3":
+        op = opcao_variavel({"i": "Impulso I (N·s)",
+                              "m": "Massa m (kg)",
+                              "v": "Velocidade final v (m/s)",
+                              "v0": "Velocidade inicial v₀ (m/s)"})
+        if op == "i":
+            m = entrada("m (kg)"); v = entrada("v (m/s)"); v0 = entrada("v₀ (m/s)")
+            resultado("I", m * (v - v0), "N·s")
+        elif op == "m":
+            i = entrada("I (N·s)"); v = entrada("v (m/s)"); v0 = entrada("v₀ (m/s)")
+            resultado("m", i / (v - v0), "kg")
+        elif op == "v":
+            i = entrada("I (N·s)"); m = entrada("m (kg)"); v0 = entrada("v₀ (m/s)")
+            resultado("v", v0 + i / m, "m/s")
+        elif op == "v0":
+            i = entrada("I (N·s)"); m = entrada("m (kg)"); v = entrada("v (m/s)")
+            resultado("v₀", v - i / m, "m/s")
+    else:
+        print("  Equação inválida.")
+
+# ----------------------------------------------------------------
+# 26. MOVIMENTO CIRCULAR UNIFORME (MCU)
+# ----------------------------------------------------------------
+def mcu():
+    titulo("26. Movimento Circular Uniforme (MCU)")
+    print("  Escolha a grandeza:")
+    print("    [1] Velocidade angular:  ω = 2π / T  =  2π·f")
+    print("    [2] Velocidade tangencial:  v = ω · r")
+    print("    [3] Aceleração centrípeta:  ac = v² / r  =  ω²·r")
+    eq = input("  Equação: ").strip()
+    if eq == "1":
+        op = opcao_variavel({"w": "ω (rad/s)", "t": "Período T (s)", "f": "Frequência f (Hz)"})
+        if op == "w":
+            print("  Usar período ou frequência?")
+            sub = input("  [t] Período  [f] Frequência: ").strip().lower()
+            if sub == "t":
+                resultado("ω", 2 * math.pi / entrada("T (s)"), "rad/s")
+            elif sub == "f":
+                resultado("ω", 2 * math.pi * entrada("f (Hz)"), "rad/s")
+        elif op == "t":
+            resultado("T", 2 * math.pi / entrada("ω (rad/s)"), "s")
+        elif op == "f":
+            resultado("f", entrada("ω (rad/s)") / (2 * math.pi), "Hz")
+    elif eq == "2":
+        op = opcao_variavel({"v": "v (m/s)", "w": "ω (rad/s)", "r": "Raio r (m)"})
+        if op == "v":
+            resultado("v", entrada("ω (rad/s)") * entrada("r (m)"), "m/s")
+        elif op == "w":
+            resultado("ω", entrada("v (m/s)") / entrada("r (m)"), "rad/s")
+        elif op == "r":
+            resultado("r", entrada("v (m/s)") / entrada("ω (rad/s)"), "m")
+    elif eq == "3":
+        op = opcao_variavel({"ac": "ac (m/s²)", "v": "v (m/s)", "w": "ω (rad/s)", "r": "r (m)"})
+        if op == "ac":
+            print("  Usar v ou ω?")
+            sub = input("  [v] Velocidade  [w] Velocidade angular: ").strip().lower()
+            if sub == "v":
+                v = entrada("v (m/s)"); r = entrada("r (m)")
+                resultado("ac", v**2 / r, "m/s²")
+            elif sub == "w":
+                w = entrada("ω (rad/s)"); r = entrada("r (m)")
+                resultado("ac", w**2 * r, "m/s²")
+        elif op == "r":
+            v = entrada("v (m/s)")
+            resultado("r", v**2 / entrada("ac (m/s²)"), "m")
+        elif op == "v":
+            resultado("v", math.sqrt(entrada("ac (m/s²)") * entrada("r (m)")), "m/s")
+        elif op == "w":
+            resultado("ω", math.sqrt(entrada("ac (m/s²)") / entrada("r (m)")), "rad/s")
+    else:
+        print("  Equação inválida.")
+
+# ----------------------------------------------------------------
+# 27. FORÇA CENTRÍPETA   Fc = m·v²/r  =  m·ω²·r
+# ----------------------------------------------------------------
+def forca_centripeta():
+    titulo("27. Força Centrípeta   Fc = m·v²/r")
+    op = opcao_variavel({"fc": "Força centrípeta Fc (N)",
+                          "m": "Massa m (kg)",
+                          "v": "Velocidade v (m/s)",
+                          "r": "Raio r (m)"})
+    if op == "fc":
+        m = entrada("m (kg)"); v = entrada("v (m/s)"); r = entrada("r (m)")
+        resultado("Fc", m * v**2 / r, "N")
+    elif op == "m":
+        fc = entrada("Fc (N)"); v = entrada("v (m/s)"); r = entrada("r (m)")
+        resultado("m", fc * r / v**2, "kg")
+    elif op == "v":
+        fc = entrada("Fc (N)"); m = entrada("m (kg)"); r = entrada("r (m)")
+        resultado("v", math.sqrt(fc * r / m), "m/s")
+    elif op == "r":
+        fc = entrada("Fc (N)"); m = entrada("m (kg)"); v = entrada("v (m/s)")
+        resultado("r", m * v**2 / fc, "m")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 28. CAMPO ELÉTRICO   E = F / q  e  E = k·Q / d²
+# ----------------------------------------------------------------
+def campo_eletrico():
+    titulo("28. Campo Elétrico   E = F/q  |  E = k·Q/d²")
+    k = 9e9
+    print("  Escolha a equação:")
+    print("    [1] Definição:  E = F / q")
+    print("    [2] Campo de carga puntual:  E = k·Q / d²")
+    eq = input("  Equação: ").strip()
+    if eq == "1":
+        op = opcao_variavel({"e": "Campo E (N/C)", "f": "Força F (N)", "q": "Carga q (C)"})
+        if op == "e":
+            resultado("E", entrada("F (N)") / entrada("q (C)"), "N/C")
+        elif op == "f":
+            resultado("F", entrada("E (N/C)") * entrada("q (C)"), "N")
+        elif op == "q":
+            resultado("q", entrada("F (N)") / entrada("E (N/C)"), "C")
+    elif eq == "2":
+        op = opcao_variavel({"e": "Campo E (N/C)", "q": "Carga Q (C)", "d": "Distância d (m)"})
+        if op == "e":
+            Q = entrada("Q (C)"); d = entrada("d (m)")
+            resultado("E", k * abs(Q) / d**2, "N/C")
+        elif op == "q":
+            e = entrada("E (N/C)"); d = entrada("d (m)")
+            resultado("Q", e * d**2 / k, "C")
+        elif op == "d":
+            e = entrada("E (N/C)"); Q = entrada("Q (C)")
+            resultado("d", math.sqrt(k * abs(Q) / e), "m")
+    else:
+        print("  Equação inválida.")
+
+# ----------------------------------------------------------------
+# 29. ENERGIA ELÉTRICA   E_el = P · t  e  Q = V · I · t
+# ----------------------------------------------------------------
+def energia_eletrica():
+    titulo("29. Energia Elétrica   E = P · t  (kWh e J)")
+    print("  Fórmulas: E = P·t  |  E = V·I·t  |  E = I²·R·t")
+    print("  Escolha a equação:")
+    print("    [1] E = P · t")
+    print("    [2] E = V · I · t")
+    print("    [3] Conversão J ↔ kWh")
+    eq = input("  Equação: ").strip()
+    if eq == "1":
+        op = opcao_variavel({"e": "Energia E (J)", "p": "Potência P (W)", "t": "Tempo t (s)"})
+        if op == "e":
+            p = entrada("P (W)"); t = entrada("t (s)")
+            resultado("E", p * t, "J", f"{p*t/3.6e6:.6g} kWh")
+        elif op == "p":
+            resultado("P", entrada("E (J)") / entrada("t (s)"), "W")
+        elif op == "t":
+            resultado("t", entrada("E (J)") / entrada("P (W)"), "s")
+    elif eq == "2":
+        op = opcao_variavel({"e": "Energia E (J)", "v": "Tensão V (V)",
+                              "i": "Corrente I (A)", "t": "Tempo t (s)"})
+        if op == "e":
+            v = entrada("V (V)"); i = entrada("I (A)"); t = entrada("t (s)")
+            resultado("E", v * i * t, "J", f"{v*i*t/3.6e6:.6g} kWh")
+        elif op == "v":
+            resultado("V", entrada("E (J)") / (entrada("I (A)") * entrada("t (s)")), "V")
+        elif op == "i":
+            resultado("I", entrada("E (J)") / (entrada("V (V)") * entrada("t (s)")), "A")
+        elif op == "t":
+            resultado("t", entrada("E (J)") / (entrada("V (V)") * entrada("I (A)")), "s")
+    elif eq == "3":
+        print("  Escolha a conversão:")
+        print("    [a] J → kWh")
+        print("    [b] kWh → J")
+        c = input("  : ").strip().lower()
+        if c == "a":
+            resultado("kWh", entrada("Energia em J") / 3.6e6, "kWh")
+        elif c == "b":
+            resultado("J", entrada("Energia em kWh") * 3.6e6, "J")
+    else:
+        print("  Equação inválida.")
+
+# ----------------------------------------------------------------
+# 30. RESISTORES EM SÉRIE E PARALELO
+# ----------------------------------------------------------------
+def resistores():
+    titulo("30. Resistores em Série e Paralelo")
+    print("  Escolha o tipo de associação:")
+    print("    [1] Série:    R_eq = R₁ + R₂ + ... + Rn")
+    print("    [2] Paralelo: 1/R_eq = 1/R₁ + 1/R₂ + ... + 1/Rn")
+    eq = input("  Tipo: ").strip()
+    if eq == "1":
+        n = int(entrada("Quantidade de resistores"))
+        total = sum(entrada(f"R{i+1} (Ω)") for i in range(n))
+        resultado("R_eq", total, "Ω")
+    elif eq == "2":
+        n = int(entrada("Quantidade de resistores"))
+        inv = sum(1 / entrada(f"R{i+1} (Ω)") for i in range(n))
+        resultado("R_eq", 1 / inv, "Ω")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 31. TRANSFORMADOR   V₁/V₂ = N₁/N₂ = I₂/I₁
+# ----------------------------------------------------------------
+def transformador():
+    titulo("31. Transformador   V₁/V₂ = N₁/N₂ = I₂/I₁")
+    print("  (transformador ideal — sem perdas)")
+    print("  Escolha a grandeza a calcular:")
+    print("    [v1] Tensão primária V₁ (V)")
+    print("    [v2] Tensão secundária V₂ (V)")
+    print("    [n1] Espiras primário N₁")
+    print("    [n2] Espiras secundário N₂")
+    print("    [i1] Corrente primária I₁ (A)")
+    print("    [i2] Corrente secundária I₂ (A)")
+    op = input("\n  Opção: ").strip().lower()
+    if op == "v1":
+        v2 = entrada("V₂ (V)"); n1 = entrada("N₁"); n2 = entrada("N₂")
+        resultado("V₁", v2 * n1 / n2, "V")
+    elif op == "v2":
+        v1 = entrada("V₁ (V)"); n1 = entrada("N₁"); n2 = entrada("N₂")
+        resultado("V₂", v1 * n2 / n1, "V")
+    elif op == "n1":
+        v1 = entrada("V₁ (V)"); v2 = entrada("V₂ (V)"); n2 = entrada("N₂")
+        resultado("N₁", v1 * n2 / v2, "espiras")
+    elif op == "n2":
+        v1 = entrada("V₁ (V)"); v2 = entrada("V₂ (V)"); n1 = entrada("N₁")
+        resultado("N₂", v2 * n1 / v1, "espiras")
+    elif op == "i1":
+        i2 = entrada("I₂ (A)"); n1 = entrada("N₁"); n2 = entrada("N₂")
+        resultado("I₁", i2 * n2 / n1, "A")
+    elif op == "i2":
+        i1 = entrada("I₁ (A)"); n1 = entrada("N₁"); n2 = entrada("N₂")
+        resultado("I₂", i1 * n1 / n2, "A")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 32. ÓPTICA — ESPELHOS E LENTES (Equação de Gauss)
+# ----------------------------------------------------------------
+def optica_gauss():
+    titulo("32. Óptica — Equação de Gauss   1/f = 1/p + 1/p'")
+    print("  Convenção de sinais:")
+    print("  • p > 0: objeto real   | p' > 0: imagem real")
+    print("  • f > 0: convergente   | f < 0: divergente")
+    op = opcao_variavel({"f": "Distância focal f (m ou cm)",
+                          "p": "Objeto p (m ou cm)",
+                          "pp": "Imagem p' (m ou cm)"})
+    if op == "f":
+        p = entrada("p"); pp = entrada("p'")
+        resultado("f", 1 / (1/p + 1/pp), "(mesma unidade de p e p')")
+    elif op == "p":
+        f = entrada("f"); pp = entrada("p'")
+        resultado("p", 1 / (1/f - 1/pp), "(mesma unidade)")
+    elif op == "pp":
+        f = entrada("f"); p = entrada("p")
+        resultado("p'", 1 / (1/f - 1/p), "(mesma unidade)")
+    else:
+        print("  Opção inválida.")
+    # Ampliação linear
+    print("  Deseja calcular a ampliação linear M = -p'/p? (s/n) ", end="")
+    if input().strip().lower() == "s":
+        p = entrada("p"); pp = entrada("p'")
+        M = -pp / p
+        print(f"\n  => M = {M:.4g}")
+        if M > 0:
+            print("     (Imagem direita)")
+        else:
+            print("     (Imagem invertida)")
+        if abs(M) > 1:
+            print(f"     (Ampliada — {abs(M):.4g}×)")
+        elif abs(M) < 1:
+            print(f"     (Reduzida — {abs(M):.4g}×)")
+        else:
+            print("     (Mesmo tamanho)")
+
+# ----------------------------------------------------------------
+# 33. ÍNDICE DE REFRAÇÃO   n = c / v
+# ----------------------------------------------------------------
+def refracao():
+    titulo("33. Refração — Índice e Lei de Snell")
+    print("  Escolha:")
+    print("    [1] Índice de refração:  n = c / v")
+    print("    [2] Lei de Snell:        n₁·sen(θ₁) = n₂·sen(θ₂)")
+    eq = input("  Equação: ").strip()
+    if eq == "1":
+        c = 3e8
+        op = opcao_variavel({"n": "Índice n", "v": "Velocidade v (m/s)"})
+        if op == "n":
+            resultado("n", c / entrada("v (m/s)"), "(adimensional)")
+        elif op == "v":
+            resultado("v", c / entrada("n"), "m/s")
+    elif eq == "2":
+        op = opcao_variavel({"t2": "Ângulo θ₂ (graus)",
+                              "t1": "Ângulo θ₁ (graus)",
+                              "n2": "Índice n₂",
+                              "n1": "Índice n₁"})
+        if op == "t2":
+            n1 = entrada("n₁"); t1 = entrada("θ₁ (graus)"); n2 = entrada("n₂")
+            val = n1 * math.sin(math.radians(t1)) / n2
+            if abs(val) > 1:
+                print("  Reflexão total — sem refração.")
+            else:
+                resultado("θ₂", math.degrees(math.asin(val)), "graus")
+        elif op == "t1":
+            n1 = entrada("n₁"); t2 = entrada("θ₂ (graus)"); n2 = entrada("n₂")
+            resultado("θ₁", math.degrees(math.asin(n2 * math.sin(math.radians(t2)) / n1)), "graus")
+        elif op == "n2":
+            n1 = entrada("n₁"); t1 = entrada("θ₁ (graus)"); t2 = entrada("θ₂ (graus)")
+            resultado("n₂", n1 * math.sin(math.radians(t1)) / math.sin(math.radians(t2)), "")
+        elif op == "n1":
+            n2 = entrada("n₂"); t1 = entrada("θ₁ (graus)"); t2 = entrada("θ₂ (graus)")
+            resultado("n₁", n2 * math.sin(math.radians(t2)) / math.sin(math.radians(t1)), "")
+    else:
+        print("  Equação inválida.")
+
+# ----------------------------------------------------------------
+# 34. DILATAÇÃO SUPERFICIAL E VOLUMÉTRICA
+# ----------------------------------------------------------------
+def dilatacao_sup_vol():
+    titulo("34. Dilatação Superficial e Volumétrica")
+    print("  Escolha:")
+    print("    [1] Superficial:  ΔA = A₀ · β · ΔT  (β ≈ 2α)")
+    print("    [2] Volumétrica:  ΔV = V₀ · γ · ΔT  (γ ≈ 3α)")
+    eq = input("  Equação: ").strip()
+    if eq == "1":
+        op = opcao_variavel({"da": "ΔA (m²)", "a0": "A₀ (m²)", "b": "β (1/°C)", "dt": "ΔT (°C)"})
+        if op == "da":
+            a0 = entrada("A₀ (m²)"); b = entrada("β (1/°C)"); dt = entrada("ΔT (°C)")
+            resultado("ΔA", a0 * b * dt, "m²")
+        elif op == "a0":
+            da = entrada("ΔA (m²)"); b = entrada("β (1/°C)"); dt = entrada("ΔT (°C)")
+            resultado("A₀", da / (b * dt), "m²")
+        elif op == "b":
+            da = entrada("ΔA (m²)"); a0 = entrada("A₀ (m²)"); dt = entrada("ΔT (°C)")
+            resultado("β", da / (a0 * dt), "1/°C")
+        elif op == "dt":
+            da = entrada("ΔA (m²)"); a0 = entrada("A₀ (m²)"); b = entrada("β (1/°C)")
+            resultado("ΔT", da / (a0 * b), "°C")
+    elif eq == "2":
+        op = opcao_variavel({"dv": "ΔV (m³)", "v0": "V₀ (m³)", "g": "γ (1/°C)", "dt": "ΔT (°C)"})
+        if op == "dv":
+            v0 = entrada("V₀ (m³)"); g = entrada("γ (1/°C)"); dt = entrada("ΔT (°C)")
+            resultado("ΔV", v0 * g * dt, "m³")
+        elif op == "v0":
+            dv = entrada("ΔV (m³)"); g = entrada("γ (1/°C)"); dt = entrada("ΔT (°C)")
+            resultado("V₀", dv / (g * dt), "m³")
+        elif op == "g":
+            dv = entrada("ΔV (m³)"); v0 = entrada("V₀ (m³)"); dt = entrada("ΔT (°C)")
+            resultado("γ", dv / (v0 * dt), "1/°C")
+        elif op == "dt":
+            dv = entrada("ΔV (m³)"); v0 = entrada("V₀ (m³)"); g = entrada("γ (1/°C)")
+            resultado("ΔT", dv / (v0 * g), "°C")
+    else:
+        print("  Equação inválida.")
+
+# ----------------------------------------------------------------
+# 35. PRESSÃO HIDROSTÁTICA   P = ρ·g·h
+# ----------------------------------------------------------------
+def pressao_hidrostatica():
+    titulo("35. Pressão Hidrostática   P = ρ·g·h")
+    g_padrao = 9.8
+    op = opcao_variavel({"p": "Pressão P (Pa)",
+                          "r": "Densidade ρ (kg/m³)",
+                          "h": "Profundidade h (m)",
+                          "g": "g (m/s²)"})
+    if op == "p":
+        r = entrada("ρ (kg/m³)")
+        g_in = input(f"  g (m/s²) [Enter = {g_padrao}]: ").strip()
+        g = float(g_in) if g_in else g_padrao
+        h = entrada("h (m)")
+        resultado("P", r * g * h, "Pa")
+    elif op == "r":
+        p = entrada("P (Pa)")
+        g_in = input(f"  g (m/s²) [Enter = {g_padrao}]: ").strip()
+        g = float(g_in) if g_in else g_padrao
+        h = entrada("h (m)")
+        resultado("ρ", p / (g * h), "kg/m³")
+    elif op == "h":
+        p = entrada("P (Pa)"); r = entrada("ρ (kg/m³)")
+        g_in = input(f"  g (m/s²) [Enter = {g_padrao}]: ").strip()
+        g = float(g_in) if g_in else g_padrao
+        resultado("h", p / (r * g), "m")
+    elif op == "g":
+        p = entrada("P (Pa)"); r = entrada("ρ (kg/m³)"); h = entrada("h (m)")
+        resultado("g", p / (r * h), "m/s²")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 36. EMPUXO (PRINCIPIO DE ARQUIMEDES)   E = ρ_fluido·g·V
+# ----------------------------------------------------------------
+def empuxo():
+    titulo("36. Empuxo   E = ρ_fluido · g · V_submerso")
+    g_padrao = 9.8
+    op = opcao_variavel({"e": "Empuxo E (N)",
+                          "r": "Densidade do fluido ρ (kg/m³)",
+                          "v": "Volume submerso V (m³)"})
+    if op == "e":
+        r = entrada("ρ_fluido (kg/m³)")
+        g_in = input(f"  g (m/s²) [Enter = {g_padrao}]: ").strip()
+        g = float(g_in) if g_in else g_padrao
+        v = entrada("V (m³)")
+        resultado("E", r * g * v, "N")
+    elif op == "r":
+        e = entrada("E (N)")
+        g_in = input(f"  g (m/s²) [Enter = {g_padrao}]: ").strip()
+        g = float(g_in) if g_in else g_padrao
+        v = entrada("V (m³)")
+        resultado("ρ", e / (g * v), "kg/m³")
+    elif op == "v":
+        e = entrada("E (N)"); r = entrada("ρ_fluido (kg/m³)")
+        g_in = input(f"  g (m/s²) [Enter = {g_padrao}]: ").strip()
+        g = float(g_in) if g_in else g_padrao
+        resultado("V", e / (r * g), "m³")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 37. RENDIMENTO   η = W_útil / W_total × 100%
+# ----------------------------------------------------------------
+def rendimento():
+    titulo("37. Rendimento   η = W_útil / W_total × 100%")
+    op = opcao_variavel({"r": "Rendimento η (%)",
+                          "wu": "Trabalho útil W_útil (J)",
+                          "wt": "Trabalho total W_total (J)"})
+    if op == "r":
+        wu = entrada("W_útil (J)"); wt = entrada("W_total (J)")
+        resultado("η", (wu / wt) * 100, "%")
+    elif op == "wu":
+        r = entrada("η (%)"); wt = entrada("W_total (J)")
+        resultado("W_útil", (r / 100) * wt, "J")
+    elif op == "wt":
+        r = entrada("η (%)"); wu = entrada("W_útil (J)")
+        resultado("W_total", wu / (r / 100), "J")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 38. ENERGIA ELÁSTICA (MOLA)   Ee = k·x² / 2
+# ----------------------------------------------------------------
+def energia_elastica():
+    titulo("38. Energia Elástica   Ee = k·x² / 2  (Lei de Hooke)")
+    print("  Lei de Hooke:  F = k · x")
+    print("  Escolha:")
+    print("    [1] Energia elástica:  Ee = k·x² / 2")
+    print("    [2] Força elástica:    F = k · x")
+    eq = input("  Equação: ").strip()
+    if eq == "1":
+        op = opcao_variavel({"e": "Ee (J)", "k": "Constante k (N/m)", "x": "Deformação x (m)"})
+        if op == "e":
+            k = entrada("k (N/m)"); x = entrada("x (m)")
+            resultado("Ee", 0.5 * k * x**2, "J")
+        elif op == "k":
+            ee = entrada("Ee (J)"); x = entrada("x (m)")
+            resultado("k", 2 * ee / x**2, "N/m")
+        elif op == "x":
+            ee = entrada("Ee (J)"); k = entrada("k (N/m)")
+            resultado("x", math.sqrt(2 * ee / k), "m")
+    elif eq == "2":
+        op = opcao_variavel({"f": "F (N)", "k": "k (N/m)", "x": "x (m)"})
+        if op == "f":
+            resultado("F", entrada("k (N/m)") * entrada("x (m)"), "N")
+        elif op == "k":
+            resultado("k", entrada("F (N)") / entrada("x (m)"), "N/m")
+        elif op == "x":
+            resultado("x", entrada("F (N)") / entrada("k (N/m)"), "m")
+    else:
+        print("  Equação inválida.")
+
+# ----------------------------------------------------------------
+# 39. DECAIMENTO RADIOATIVO   N = N₀ · (1/2)^(t/T½)
+# ----------------------------------------------------------------
+def decaimento_radioativo():
+    titulo("39. Decaimento Radioativo   N = N₀ · (1/2)^(t/T½)")
+    op = opcao_variavel({"n": "N (átomos restantes)",
+                          "n0": "N₀ (átomos iniciais)",
+                          "t": "Tempo t",
+                          "t2": "Meia-vida T½"})
+    print("  (t e T½ devem estar na mesma unidade)")
+    if op == "n":
+        n0 = entrada("N₀"); t = entrada("t"); t2 = entrada("T½")
+        resultado("N", n0 * (0.5 ** (t / t2)), "átomos")
+    elif op == "n0":
+        n = entrada("N"); t = entrada("t"); t2 = entrada("T½")
+        resultado("N₀", n / (0.5 ** (t / t2)), "átomos")
+    elif op == "t":
+        n = entrada("N"); n0 = entrada("N₀"); t2 = entrada("T½")
+        resultado("t", t2 * math.log(n / n0) / math.log(0.5), "(mesma unidade de T½)")
+    elif op == "t2":
+        n = entrada("N"); n0 = entrada("N₀"); t = entrada("t")
+        resultado("T½", t * math.log(0.5) / math.log(n / n0), "(mesma unidade de t)")
+    else:
+        print("  Opção inválida.")
+
+# ----------------------------------------------------------------
+# 40. EFEITO FOTOELÉTRICO   E_fóton = h·f  e  E_cin = h·f - φ
+# ----------------------------------------------------------------
+def efeito_fotoeletrico():
+    titulo("40. Efeito Fotoelétrico   E = h·f  |  Ec = h·f - φ")
+    h = 6.626e-34  # J·s
+    c = 3e8         # m/s
+    print(f"  (h = {h} J·s  |  c = {c} m/s)")
+    print("  Escolha:")
+    print("    [1] Energia do fóton:       E = h · f")
+    print("    [2] Comprimento de onda:    E = h·c / λ")
+    print("    [3] Energia cinética máx.:  Ec = h·f - φ (função trabalho)")
+    eq = input("  Equação: ").strip()
+    if eq == "1":
+        op = opcao_variavel({"e": "E (J)", "f": "f (Hz)"})
+        if op == "e":
+            resultado("E", h * entrada("f (Hz)"), "J")
+        elif op == "f":
+            resultado("f", entrada("E (J)") / h, "Hz")
+    elif eq == "2":
+        op = opcao_variavel({"e": "E (J)", "l": "λ (m)"})
+        if op == "e":
+            resultado("E", h * c / entrada("λ (m)"), "J")
+        elif op == "l":
+            resultado("λ", h * c / entrada("E (J)"), "m")
+    elif eq == "3":
+        op = opcao_variavel({"ec": "Ec (J)", "f": "f (Hz)", "fi": "Função trabalho φ (J)"})
+        if op == "ec":
+            f = entrada("f (Hz)"); fi = entrada("φ (J)")
+            ec = h * f - fi
+            if ec < 0:
+                print("  Frequência abaixo do limiar — sem emissão de elétrons.")
+            else:
+                resultado("Ec", ec, "J")
+        elif op == "f":
+            ec = entrada("Ec (J)"); fi = entrada("φ (J)")
+            resultado("f", (ec + fi) / h, "Hz")
+        elif op == "fi":
+            ec = entrada("Ec (J)"); f = entrada("f (Hz)")
+            resultado("φ", h * f - ec, "J")
+    else:
+        print("  Equação inválida.")
+
+# ================================================================
+#                     MENU PRINCIPAL
+# ================================================================
+
+MENU = [
+    # --- Mecânica ---
+    ("1",  "Velocidade Média                  v = Δs / Δt",                    velocidade_media),
+    ("2",  "Segunda Lei de Newton             F = m · a",                       segunda_lei_newton),
+    ("3",  "Energia Cinética                  Ec = m·v² / 2",                   energia_cinetica),
+    ("4",  "Energia Potencial Gravitacional   Ep = m·g·h",                      energia_potencial_grav),
+    ("5",  "Peso de um Corpo                  P = m · g",                       peso_corpo),
+    ("6",  "MRU                               s = s₀ + v·t",                    mru),
+    ("7",  "MUV                               v = v₀+a·t / Torricelli",         muv),
+    ("8",  "Trabalho de uma Força             W = F·d·cos(θ)",                  trabalho_forca),
+    ("9",  "Potência Mecânica                 P = W/t  ou  F·v",                potencia),
+    ("10", "Quantidade de Movimento/Impulso   Q = m·v  |  I = F·Δt",           quantidade_movimento),
+    ("11", "Movimento Circular (MCU)          ω = 2π/T  |  v = ω·r",           mcu),
+    ("12", "Força Centrípeta                  Fc = m·v²/r",                     forca_centripeta),
+    ("13", "Energia Elástica / Lei de Hooke   Ee = k·x²/2  |  F = k·x",        energia_elastica),
+    ("14", "Empuxo (Arquimedes)               E = ρ·g·V",                       empuxo),
+    ("15", "Pressão Hidrostática              P = ρ·g·h",                       pressao_hidrostatica),
+    ("16", "Pressão                           P = F / A",                       pressao),
+    ("17", "Densidade                         ρ = m / V",                       densidade),
+    ("18", "Rendimento                        η = W_útil/W_total × 100%",       rendimento),
+    # --- Termologia ---
+    ("19", "Calor Sensível                    Q = m·c·ΔT",                      calor_sensivel),
+    ("20", "Calor Latente                     Q = m · L",                       calor_latente),
+    ("21", "Dilatação Térmica Linear          ΔL = L₀·α·ΔT",                   dilatacao_termica),
+    ("22", "Dilatação Superficial/Volumétrica ΔA=A₀βΔT | ΔV=V₀γΔT",           dilatacao_sup_vol),
+    ("23", "Gases Ideais                      P·V = n·R·T",                     gases_ideais),
+    ("24", "Lei de Boyle                      P₁V₁ = P₂V₂",                    lei_boyle),
+    ("25", "Lei de Charles                    V₁/T₁ = V₂/T₂",                  lei_charles),
+    # --- Ondulatória e Óptica ---
+    ("26", "Ondulatória                       v = λ · f",                       ondulatoria),
+    ("27", "Período e Frequência              T = 1 / f",                       periodo_frequencia),
+    ("28", "Óptica — Equação de Gauss         1/f = 1/p + 1/p'",               optica_gauss),
+    ("29", "Refração — Índice e Snell         n = c/v  |  n₁senθ₁=n₂senθ₂",   refracao),
+    # --- Eletricidade ---
+    ("30", "Lei de Coulomb                    F = k·|q₁q₂| / d²",              coulomb),
+    ("31", "Campo Elétrico                    E = F/q  |  E = k·Q/d²",         campo_eletrico),
+    ("32", "Lei de Ohm                        V = R · I",                       lei_ohm),
+    ("33", "Potência Elétrica                 P = V·I / I²R / V²/R",           potencia_eletrica),
+    ("34", "Energia Elétrica                  E = P·t  (J e kWh)",             energia_eletrica),
+    ("35", "Resistores Série/Paralelo         R_eq",                            resistores),
+    ("36", "Transformador                     V₁/V₂ = N₁/N₂ = I₂/I₁",        transformador),
+    # --- Física Moderna ---
+    ("37", "Gravitação Universal              F = G·m₁·m₂ / d²",               gravitacao_universal),
+    ("38", "Equação de Einstein               E = m · c²",                      einstein),
+    ("39", "Efeito Fotoelétrico               E = h·f  |  Ec = hf - φ",        efeito_fotoeletrico),
+    ("40", "Decaimento Radioativo             N = N₀·(1/2)^(t/T½)",            decaimento_radioativo),
+]
+
+CATEGORIAS = {
+    "MECÂNICA":       [str(i) for i in range(1, 19)],
+    "TERMOLOGIA":     [str(i) for i in range(19, 26)],
+    "ONDAS / ÓPTICA": [str(i) for i in range(26, 30)],
+    "ELETRICIDADE":   [str(i) for i in range(30, 37)],
+    "FÍSICA MODERNA": [str(i) for i in range(37, 41)],
+}
+
+def mostrar_menu():
+    print("\n" + "=" * 63)
+    print("         ASSISTENTE DE FÍSICA  — ENSINO MÉDIO")
+    print("=" * 63)
+    mapa_num = {num: nome for num, nome, _ in MENU}
+    for cat, nums in CATEGORIAS.items():
+        print(f"\n  ── {cat} ──")
+        for n in nums:
+            print(f"    {n:>2}. {mapa_num[n]}")
+    print("\n   0. Sair")
+    print("=" * 63)
+
+def main():
+    mapa = {num: func for num, _, func in MENU}
+    while True:
+        mostrar_menu()
+        escolha = input("\n  Escolha o número do tema: ").strip()
+        if escolha == "0":
+            print("\n  Bons estudos! Até logo.\n")
+            break
+        elif escolha in mapa:
+            try:
+                mapa[escolha]()
+            except ZeroDivisionError:
+                print("\n  !! Erro: divisão por zero. Verifique os valores.")
+            except ValueError as e:
+                print(f"\n  !! Erro de valor: {e}")
+            input("\n  [Enter para continuar]")
+        else:
+            print("  Opção inválida. Tente novamente.")
+
+if __name__ == "__main__":
+    main()
