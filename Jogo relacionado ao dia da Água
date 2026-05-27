@@ -1,0 +1,45 @@
+print("Olá \n Você acabou de ser contratado para cuidar de um data center na cidade de Socorro no interior de SP"
+"\n Você tem uma simples missão manter este data center funcionando sem esvaziar o reservatorio "
+"da cidade")
+demanda=0
+clacularconsumoagua=0
+reservatorio=200
+aquecimentoacu=0
+import random
+print("Na sua frente há 2 botões um para ignorar o aquecimento e o outro para resfriar os servidores"
+     "\n quando o sistema apitar voce deve escolher entre um dos botões para o que fazer")
+
+startgame=input("Agora é com você vamos começar esta aventura ??(digite start)")
+if(startgame=="start"):
+    print("De tempos em tempos se é recebido o alerta e o nivel da represa se o nivel de agua acabar você perde o jogo se o aquecimento for demais e o servidor estourar voce tambem perde o jogo")
+    for dias in range(0,10):
+        print ("hoje é o dia ", dias + 1)
+        chuva = random.randint(1,10)
+        if chuva <= 2:
+            reservatorio = reservatorio + 20
+            print("Choveu")
+        print("O nivel do seu reservatorio é de",reservatorio)
+        import time
+        
+        while(reservatorio!=0):
+            demanda=random.randint(1,30)
+            aquecimento=demanda+3
+            print("O não, esta aquecendo tome cuidado seu aquecimento é de ",aquecimento)
+            oqfazer=input("Oque deseja fazer???(ignorar ou resfriar) ")
+            if(oqfazer=="resfriar"):
+                reservatorios=int(input("escolha um numerero de 1 a 43 "))
+                reservatorio=reservatorio-reservatorios
+                aquecimento=aquecimento-reservatorios
+                if(reservatorios>=aquecimento):
+                    print("parabens voce conseguiu resfriar os    servidores.     Seu reservatorio agor é de ", reservatorio)
+                else:
+                    print("você nao resfriou completamente, seu aquecimento é de ", aquecimento)
+            elif(oqfazer=="ignorar"):
+                aquecimentoacu=aquecimentoacu+aquecimento
+                print("voce não resfriou em nada seu aquecimento    seu aquecimento acumulado é de", aquecimentoacu)
+                
+                
+            else:
+                print("sintaxe invalida")
+else:
+    print("você não está prnto para a missão")
