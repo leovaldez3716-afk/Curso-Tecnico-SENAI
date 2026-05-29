@@ -1,0 +1,2146 @@
+#!/usr/bin/env python3                        
+# -*- coding: utf-8 -*-
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║           ASSISTENTE DE QUÍMICA - ENSINO MÉDIO COMPLETO                    ║
+║           118 Elementos · Todas as Fórmulas · Cálculos Automáticos         ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+"""
+
+import math
+import sys
+import os
+import re
+import json
+from typing import Optional
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CORES ANSI PARA TERMINAL
+# ─────────────────────────────────────────────────────────────────────────────
+class C:
+    RESET  = "\033[0m"
+    BOLD   = "\033[1m"
+    DIM    = "\033[2m"
+    CYAN   = "\033[96m"
+    GREEN  = "\033[92m"
+    YELLOW = "\033[93m"
+    RED    = "\033[91m"
+    BLUE   = "\033[94m"
+    MAGENTA= "\033[95m"
+    WHITE  = "\033[97m"
+    GRAY   = "\033[90m"
+    BG_DARK= "\033[40m"
+    BG_BLUE= "\033[44m"
+    ULINE  = "\033[4m"
+
+def cor(texto, *estilos):
+    return "".join(estilos) + str(texto) + C.RESET
+
+def titulo(texto, width=78):
+    linha = "═" * width
+    padding = (width - len(texto) - 2) // 2
+    return (
+        f"\n{cor(linha, C.CYAN)}\n"
+        f"{cor(' ' * padding + '◈ ' + texto + ' ◈', C.CYAN, C.BOLD)}\n"
+        f"{cor(linha, C.CYAN)}"
+    )
+
+def subtitulo(texto):
+    return f"\n{cor('▸ ' + texto, C.YELLOW, C.BOLD)}\n{cor('─' * 60, C.GRAY)}"
+
+def ok(msg):    return f"  {cor('✔', C.GREEN)} {msg}"
+def err(msg):   return f"  {cor('✘', C.RED)} {msg}"
+def info(msg):  return f"  {cor('ℹ', C.CYAN)} {msg}"
+def warn(msg):  return f"  {cor('⚠', C.YELLOW)} {msg}"
+def result(label, valor, unit=""):
+    return f"\n  {cor(label + ':', C.GRAY)} {cor(str(valor) + (' ' + unit if unit else ''), C.GREEN, C.BOLD)}"
+def resultado_box(titulo_r, linhas):
+    w = 60
+    print(f"\n  {cor('┌' + '─'*(w-2) + '┐', C.CYAN)}")
+    print(f"  {cor('│', C.CYAN)} {cor(titulo_r.center(w-4), C.CYAN, C.BOLD)} {cor('│', C.CYAN)}")
+    print(f"  {cor('├' + '─'*(w-2) + '┤', C.CYAN)}")
+    for l in linhas:
+        padding_r = w - 4 - len(re.sub(r'\033\[[0-9;]*m', '', l))
+        print(f"  {cor('│', C.CYAN)} {l}{' '*max(0,padding_r)} {cor('│', C.CYAN)}")
+    print(f"  {cor('└' + '─'*(w-2) + '┘', C.CYAN)}")
+
+def limpar():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+def input_num(prompt, default=None, allow_empty=False):
+    while True:
+        try:
+            val = input(f"  {cor('►', C.CYAN)} {prompt}: ").strip()
+            if val == "" and allow_empty:
+                return None
+            if val == "" and default is not None:
+                return default
+            return float(val.replace(",", "."))
+        except ValueError:
+            print(err("Valor inválido. Digite um número."))
+
+def input_str(prompt):
+    return input(f"  {cor('►', C.CYAN)} {prompt}: ").strip()
+
+def pausar():
+    input(f"\n  {cor('[Pressione ENTER para continuar]', C.GRAY)}")
+
+def separador():
+    print(cor("  " + "─" * 60, C.GRAY))
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BANCO DE DADOS DOS 118 ELEMENTOS QUÍMICOS
+# ─────────────────────────────────────────────────────────────────────────────
+ELEMENTOS = {
+    1:  {"sym":"H",  "nome":"Hidrogênio",    "massa":1.008,   "cat":"Não-metal",         "periodo":1,"grupo":1,  "bloco":"s","estado":"gás",     "config":"1s¹",
+         "en":2.20,  "raio":53,   "pe":-252.9,"pf":-259.1,"dens":0.0000899,"desc":1766,"descob":"Henry Cavendish",
+         "ox":["+1","-1"],"uses":"Combustível de foguetes, síntese de amônia, refinamento de petróleo, células a combustível, hidrogênio verde"},
+    2:  {"sym":"He", "nome":"Hélio",         "massa":4.003,   "cat":"Gás nobre",         "periodo":1,"grupo":18, "bloco":"s","estado":"gás",     "config":"1s²",
+         "en":None,  "raio":31,   "pe":-268.9,"pf":-272.2,"dens":0.000178, "desc":1868,"descob":"Jules Janssen / Norman Lockyer",
+         "ox":["0"],"uses":"Balões, mergulho (HeliOx), criogenia (MRI), detecção de fugas, lasers He-Ne"},
+    3:  {"sym":"Li", "nome":"Lítio",         "massa":6.941,   "cat":"Metal alcalino",    "periodo":2,"grupo":1,  "bloco":"s","estado":"sólido",  "config":"[He] 2s¹",
+         "en":0.98,  "raio":167,  "pe":1342,  "pf":180.5, "dens":0.534,    "desc":1817,"descob":"Johan August Arfvedson",
+         "ox":["+1"],"uses":"Baterias de íon-lítio (celulares/EVs), cerâmicas, vidros, medicamento bipolar (carbonato de lítio)"},
+    4:  {"sym":"Be", "nome":"Berílio",       "massa":9.012,   "cat":"Metal alcalino-terroso","periodo":2,"grupo":2,"bloco":"s","estado":"sólido","config":"[He] 2s²",
+         "en":1.57,  "raio":112,  "pe":2469,  "pf":1287,  "dens":1.85,     "desc":1798,"descob":"Louis-Nicolas Vauquelin",
+         "ox":["+2"],"uses":"Janelas de raios X, ligas Be-Cu, estruturas aeroespaciais, espelhos de telescópio"},
+    5:  {"sym":"B",  "nome":"Boro",          "massa":10.811,  "cat":"Semimetal",         "periodo":2,"grupo":13, "bloco":"p","estado":"sólido",  "config":"[He] 2s² 2p¹",
+         "en":2.04,  "raio":87,   "pe":3927,  "pf":2076,  "dens":2.08,     "desc":1808,"descob":"Gay-Lussac / Thenard / Davy",
+         "ox":["+3"],"uses":"Fibra de vidro, bórax, ácido bórico, semicondutores, neutron absorbers em reatores nucleares"},
+    6:  {"sym":"C",  "nome":"Carbono",       "massa":12.011,  "cat":"Não-metal",         "periodo":2,"grupo":14, "bloco":"p","estado":"sólido",  "config":"[He] 2s² 2p²",
+         "en":2.55,  "raio":67,   "pe":4027,  "pf":3550,  "dens":2.267,    "desc":-3750,"descob":"Pré-histórico",
+         "ox":["+4","+2","-4"],"uses":"Diamante (joias/abrasivos), grafite (lápis/eletrodos), nanotubos, grafeno, aço, carbono ativado, base de toda vida orgânica"},
+    7:  {"sym":"N",  "nome":"Nitrogênio",    "massa":14.007,  "cat":"Não-metal",         "periodo":2,"grupo":15, "bloco":"p","estado":"gás",     "config":"[He] 2s² 2p³",
+         "en":3.04,  "raio":56,   "pe":-195.8,"pf":-210.1,"dens":0.001251, "desc":1772,"descob":"Daniel Rutherford",
+         "ox":["+5","+4","+3","+2","+1","-3"],"uses":"Fertilizantes (NH3), explosivos, N2 líquido criogênico, atmosfera inerte, bolsas de airbag"},
+    8:  {"sym":"O",  "nome":"Oxigênio",      "massa":15.999,  "cat":"Não-metal",         "periodo":2,"grupo":16, "bloco":"p","estado":"gás",     "config":"[He] 2s² 2p⁴",
+         "en":3.44,  "raio":48,   "pe":-183.0,"pf":-218.4,"dens":0.001429, "desc":1774,"descob":"Carl Wilhelm Scheele / Joseph Priestley",
+         "ox":["-2","-1"],"uses":"Respiração celular, combustão, siderurgia (aço), tratamento de água, medicina (hospitalar), ozônio (proteção UV)"},
+    9:  {"sym":"F",  "nome":"Flúor",         "massa":18.998,  "cat":"Halogênio",         "periodo":2,"grupo":17, "bloco":"p","estado":"gás",     "config":"[He] 2s² 2p⁵",
+         "en":3.98,  "raio":42,   "pe":-188.1,"pf":-219.6,"dens":0.001696, "desc":1886,"descob":"Henri Moissan",
+         "ox":["-1"],"uses":"Pasta de dentes (fluoreto de sódio), Teflon (PTFE), refrigerantes HFC, enriquecimento de urânio (UF6)"},
+    10: {"sym":"Ne", "nome":"Neônio",        "massa":20.180,  "cat":"Gás nobre",         "periodo":2,"grupo":18, "bloco":"p","estado":"gás",     "config":"[He] 2s² 2p⁶",
+         "en":None,  "raio":38,   "pe":-246.1,"pf":-248.6,"dens":0.0009,   "desc":1898,"descob":"William Ramsay / Morris Travers",
+         "ox":["0"],"uses":"Letreiros luminosos (tubos de neon), lasers He-Ne, detectores de partículas, indicadores de alta tensão"},
+    11: {"sym":"Na", "nome":"Sódio",         "massa":22.990,  "cat":"Metal alcalino",    "periodo":3,"grupo":1,  "bloco":"s","estado":"sólido",  "config":"[Ne] 3s¹",
+         "en":0.93,  "raio":190,  "pe":883,   "pf":97.72, "dens":0.968,    "desc":1807,"descob":"Humphry Davy",
+         "ox":["+1"],"uses":"Sal de cozinha (NaCl), soda cáustica (NaOH), lâmpadas de vapor de sódio, bicarbonato de sódio, reator nuclear refrigerado a Na"},
+    12: {"sym":"Mg", "nome":"Magnésio",      "massa":24.305,  "cat":"Metal alcalino-terroso","periodo":3,"grupo":2,"bloco":"s","estado":"sólido","config":"[Ne] 3s²",
+         "en":1.31,  "raio":160,  "pe":1090,  "pf":650,   "dens":1.738,    "desc":1808,"descob":"Humphry Davy",
+         "ox":["+2"],"uses":"Ligas leves (aviação/automotivo), fogos de artifício (luz branca intensa), suplemento alimentar, antiácido, clorofila"},
+    13: {"sym":"Al", "nome":"Alumínio",      "massa":26.982,  "cat":"Metal pós-transição","periodo":3,"grupo":13,"bloco":"p","estado":"sólido",  "config":"[Ne] 3s² 3p¹",
+         "en":1.61,  "raio":143,  "pe":2519,  "pf":660.3, "dens":2.698,    "desc":1825,"descob":"Hans Christian Ørsted",
+         "ox":["+3"],"uses":"Embalagens (latas/papel alumínio), aviação, construção civil, fios elétricos, termite (Al+Fe2O3), purificação de água (Al2SO4)"},
+    14: {"sym":"Si", "nome":"Silício",       "massa":28.086,  "cat":"Semimetal",         "periodo":3,"grupo":14, "bloco":"p","estado":"sólido",  "config":"[Ne] 3s² 3p²",
+         "en":1.90,  "raio":117,  "pe":3265,  "pf":1414,  "dens":2.329,    "desc":1824,"descob":"Jöns Jacob Berzelius",
+         "ox":["+4","-4"],"uses":"Semicondutores (chips/transistores), painéis solares, vidro (SiO2), cimento, silicones, fibra óptica"},
+    15: {"sym":"P",  "nome":"Fósforo",       "massa":30.974,  "cat":"Não-metal",         "periodo":3,"grupo":15, "bloco":"p","estado":"sólido",  "config":"[Ne] 3s² 3p³",
+         "en":2.19,  "raio":98,   "pe":280.5, "pf":44.2,  "dens":1.82,     "desc":1669,"descob":"Hennig Brand",
+         "ox":["+5","+3","-3"],"uses":"Fertilizantes (superfosfato), fósforos, inseticidas organofosforados, ácido fosfórico (refrigerantes), DNA/ATP/fosfolipídeos"},
+    16: {"sym":"S",  "nome":"Enxofre",       "massa":32.065,  "cat":"Não-metal",         "periodo":3,"grupo":16, "bloco":"p","estado":"sólido",  "config":"[Ne] 3s² 3p⁴",
+         "en":2.58,  "raio":88,   "pe":444.7, "pf":119.6, "dens":2.067,    "desc":-2000,"descob":"Pré-histórico",
+         "ox":["+6","+4","-2"],"uses":"Ácido sulfúrico (H2SO4 — mais produzido no mundo), fertilizantes, borracha vulcanizada, fungicidas, pólvora negra"},
+    17: {"sym":"Cl", "nome":"Cloro",         "massa":35.453,  "cat":"Halogênio",         "periodo":3,"grupo":17, "bloco":"p","estado":"gás",     "config":"[Ne] 3s² 3p⁵",
+         "en":3.16,  "raio":79,   "pe":-34.05,"pf":-101.5,"dens":0.003214, "desc":1774,"descob":"Carl Wilhelm Scheele",
+         "ox":["-1","+1","+3","+5","+7"],"uses":"Desinfetante de piscinas e água potável, PVC (policloreto de vinila), solventes clorados, HCl industrial, alvejante (NaClO)"},
+    18: {"sym":"Ar", "nome":"Argônio",       "massa":39.948,  "cat":"Gás nobre",         "periodo":3,"grupo":18, "bloco":"p","estado":"gás",     "config":"[Ne] 3s² 3p⁶",
+         "en":None,  "raio":71,   "pe":-185.9,"pf":-189.3,"dens":0.001784, "desc":1894,"descob":"William Ramsay / Lord Rayleigh",
+         "ox":["0"],"uses":"Soldagem MIG/TIG (proteção inerte), lâmpadas incandescentes, lasers de argônio, janelas duplas (isolamento), cromatografia"},
+    19: {"sym":"K",  "nome":"Potássio",      "massa":39.098,  "cat":"Metal alcalino",    "periodo":4,"grupo":1,  "bloco":"s","estado":"sólido",  "config":"[Ar] 4s¹",
+         "en":0.82,  "raio":243,  "pe":759,   "pf":63.5,  "dens":0.862,    "desc":1807,"descob":"Humphry Davy",
+         "ox":["+1"],"uses":"Fertilizantes (KCl — potássio agrícola), pólvora (KNO3), permanganato (KMnO4), potencial de membrana celular (K+/Na+)"},
+    20: {"sym":"Ca", "nome":"Cálcio",        "massa":40.078,  "cat":"Metal alcalino-terroso","periodo":4,"grupo":2,"bloco":"s","estado":"sólido","config":"[Ar] 4s²",
+         "en":1.00,  "raio":194,  "pe":1484,  "pf":842,   "dens":1.55,     "desc":1808,"descob":"Humphry Davy",
+         "ox":["+2"],"uses":"Ossos e dentes (hidroxiapatita Ca5(PO4)3OH), cimento Portland (CaO+SiO2), gesso (CaSO4), cal (Ca(OH)2), cloreto de cálcio (desgelante)"},
+    21: {"sym":"Sc", "nome":"Escândio",      "massa":44.956,  "cat":"Metal de transição","periodo":4,"grupo":3,  "bloco":"d","estado":"sólido",  "config":"[Ar] 3d¹ 4s²",
+         "en":1.36,  "raio":184,  "pe":2836,  "pf":1541,  "dens":2.985,    "desc":1879,"descob":"Lars Fredrik Nilson",
+         "ox":["+3"],"uses":"Ligas Al-Sc (bicicletas de corrida, aeroespacial), lâmpadas de halogênio de alta intensidade, eletrodos de arco"},
+    22: {"sym":"Ti", "nome":"Titânio",       "massa":47.867,  "cat":"Metal de transição","periodo":4,"grupo":4,  "bloco":"d","estado":"sólido",  "config":"[Ar] 3d² 4s²",
+         "en":1.54,  "raio":176,  "pe":3287,  "pf":1668,  "dens":4.506,    "desc":1791,"descob":"William Gregor",
+         "ox":["+4","+3","+2"],"uses":"Aviação (fuselagem), implantes médicos/dentários (biocompatível), pigmento TiO2 (tintas/cosméticos), joias de titânio"},
+    23: {"sym":"V",  "nome":"Vanádio",       "massa":50.942,  "cat":"Metal de transição","periodo":4,"grupo":5,  "bloco":"d","estado":"sólido",  "config":"[Ar] 3d³ 4s²",
+         "en":1.63,  "raio":171,  "pe":3407,  "pf":1910,  "dens":6.0,      "desc":1801,"descob":"Andrés Manuel del Río",
+         "ox":["+5","+4","+3","+2"],"uses":"Aços especiais (ferramentas/molas), catalisador V2O5 (produção H2SO4), baterias de fluxo de vanádio-redox"},
+    24: {"sym":"Cr", "nome":"Cromo",         "massa":51.996,  "cat":"Metal de transição","periodo":4,"grupo":6,  "bloco":"d","estado":"sólido",  "config":"[Ar] 3d⁵ 4s¹",
+         "en":1.66,  "raio":166,  "pe":2671,  "pf":1907,  "dens":7.15,     "desc":1797,"descob":"Louis Nicolas Vauquelin",
+         "ox":["+6","+3","+2"],"uses":"Aço inoxidável (Cr>10,5%), cromagem galvânica, pigmentos (verde Cr2O3, amarelo CrO4), curtimento de couro"},
+    25: {"sym":"Mn", "nome":"Manganês",      "massa":54.938,  "cat":"Metal de transição","periodo":4,"grupo":7,  "bloco":"d","estado":"sólido",  "config":"[Ar] 3d⁵ 4s²",
+         "en":1.55,  "raio":161,  "pe":2061,  "pf":1246,  "dens":7.44,     "desc":1774,"descob":"Johan Gottlieb Gahn",
+         "ox":["+7","+4","+3","+2"],"uses":"Aços especiais (Hadfield), baterias alcalinas (MnO2 cátodo), permanganato KMnO4 (antisséptico/oxidante), fertilizante micronutriente"},
+    26: {"sym":"Fe", "nome":"Ferro",         "massa":55.845,  "cat":"Metal de transição","periodo":4,"grupo":8,  "bloco":"d","estado":"sólido",  "config":"[Ar] 3d⁶ 4s²",
+         "en":1.83,  "raio":156,  "pe":2861,  "pf":1538,  "dens":7.874,    "desc":-3500,"descob":"Pré-histórico",
+         "ox":["+3","+2"],"uses":"Aço (liga Fe-C), ferro fundido, hemoglobina (Fe2+ transporta O2), catalisador de Haber-Bosch (síntese NH3), eletroímãs"},
+    27: {"sym":"Co", "nome":"Cobalto",       "massa":58.933,  "cat":"Metal de transição","periodo":4,"grupo":9,  "bloco":"d","estado":"sólido",  "config":"[Ar] 3d⁷ 4s²",
+         "en":1.88,  "raio":152,  "pe":2927,  "pf":1495,  "dens":8.9,      "desc":1735,"descob":"Georg Brandt",
+         "ox":["+3","+2"],"uses":"Ligas magnéticas (Alnico, Smco), pigmento azul cobalto, baterias de lítio (LiCoO2), vitamina B12 (cobalamina), catalisadores"},
+    28: {"sym":"Ni", "nome":"Níquel",        "massa":58.693,  "cat":"Metal de transição","periodo":4,"grupo":10, "bloco":"d","estado":"sólido",  "config":"[Ar] 3d⁸ 4s²",
+         "en":1.91,  "raio":149,  "pe":2913,  "pf":1455,  "dens":8.908,    "desc":1751,"descob":"Axel Fredrik Cronstedt",
+         "ox":["+2","+3"],"uses":"Aço inoxidável, moedas, galvanoplastia (niquelagem), baterias NiMH, catalisador de hidrogenação (margarina), superligas aeroespaciais"},
+    29: {"sym":"Cu", "nome":"Cobre",         "massa":63.546,  "cat":"Metal de transição","periodo":4,"grupo":11, "bloco":"d","estado":"sólido",  "config":"[Ar] 3d¹⁰ 4s¹",
+         "en":1.90,  "raio":145,  "pe":2562,  "pf":1084.6,"dens":8.96,     "desc":-9000,"descob":"Pré-histórico",
+         "ox":["+2","+1"],"uses":"Fios e cabos elétricos (melhor condutor comercial), encanamentos, ligas (bronze=Cu+Sn, latão=Cu+Zn), moedas, fungicida (sulfato de cobre)"},
+    30: {"sym":"Zn", "nome":"Zinco",         "massa":65.38,   "cat":"Metal de transição","periodo":4,"grupo":12, "bloco":"d","estado":"sólido",  "config":"[Ar] 3d¹⁰ 4s²",
+         "en":1.65,  "raio":142,  "pe":907,   "pf":419.5, "dens":7.134,    "desc":1746,"descob":"Andreas Sigismund Marggraf",
+         "ox":["+2"],"uses":"Galvanização de aço (proteção anticorrosão), latão, pilhas secas (anodo de Zn), óxido de zinco (protetor solar/cosméticos), suplemento Zn"},
+    31: {"sym":"Ga", "nome":"Gálio",         "massa":69.723,  "cat":"Metal pós-transição","periodo":4,"grupo":13,"bloco":"p","estado":"sólido",  "config":"[Ar] 3d¹⁰ 4s² 4p¹",
+         "en":1.81,  "raio":136,  "pe":2229,  "pf":29.76, "dens":5.91,     "desc":1875,"descob":"Paul Emile Lecoq de Boisbaudran",
+         "ox":["+3"],"uses":"LEDs (GaAs azul/vermelho, GaN branco), painéis solares de alta eficiência, termômetros especiais (pf=29,76°C derrete na mão)"},
+    32: {"sym":"Ge", "nome":"Germânio",      "massa":72.63,   "cat":"Semimetal",         "periodo":4,"grupo":14, "bloco":"p","estado":"sólido",  "config":"[Ar] 3d¹⁰ 4s² 4p²",
+         "en":2.01,  "raio":125,  "pe":2833,  "pf":938.2, "dens":5.323,    "desc":1886,"descob":"Clemens Winkler",
+         "ox":["+4","+2"],"uses":"Fibra óptica (GeO2), visão noturna (detector infravermelho), transistores históricos, catalisador PET, painéis solares de alta eficiência"},
+    33: {"sym":"As", "nome":"Arsênio",       "massa":74.922,  "cat":"Semimetal",         "periodo":4,"grupo":15, "bloco":"p","estado":"sólido",  "config":"[Ar] 3d¹⁰ 4s² 4p³",
+         "en":2.18,  "raio":114,  "pe":614,   "pf":817,   "dens":5.727,    "desc":1250,"descob":"Albertus Magnus",
+         "ox":["+5","+3","-3"],"uses":"Semicondutores GaAs (celulares/satélites), ligas de chumbo endurecido, arseniato de cobre (preservativo madeira), histórico como veneno"},
+    34: {"sym":"Se", "nome":"Selênio",       "massa":78.971,  "cat":"Não-metal",         "periodo":4,"grupo":16, "bloco":"p","estado":"sólido",  "config":"[Ar] 3d¹⁰ 4s² 4p⁴",
+         "en":2.55,  "raio":103,  "pe":685,   "pf":221,   "dens":4.819,    "desc":1817,"descob":"Jöns Jacob Berzelius",
+         "ox":["-2","+4","+6"],"uses":"Painéis solares CdTe, vidros coloridos vermelho, fotocopiadoras (tambor de Se), antidandruff (shampoo), oligoelemento essencial"},
+    35: {"sym":"Br", "nome":"Bromo",         "massa":79.904,  "cat":"Halogênio",         "periodo":4,"grupo":17, "bloco":"p","estado":"líquido", "config":"[Ar] 3d¹⁰ 4s² 4p⁵",
+         "en":2.96,  "raio":94,   "pe":58.8,  "pf":-7.2,  "dens":3.122,    "desc":1826,"descob":"Antoine Jérôme Balard",
+         "ox":["-1","+1","+3","+5","+7"],"uses":"Retardantes de chama (TBBPA), pesticidas, fotografias (AgBr), HBr industrial, anticonvulsivos históricos"},
+    36: {"sym":"Kr", "nome":"Criptônio",     "massa":83.798,  "cat":"Gás nobre",         "periodo":4,"grupo":18, "bloco":"p","estado":"gás",     "config":"[Ar] 3d¹⁰ 4s² 4p⁶",
+         "en":3.0,   "raio":88,   "pe":-153.4,"pf":-157.4,"dens":0.003749, "desc":1898,"descob":"William Ramsay / Morris Travers",
+         "ox":["0","+2"],"uses":"Lasers excimer KrF (fotolitografia de chips), lâmpadas de flash (fotografia), janelas duplas, antigo padrão de comprimento (1960-1983)"},
+    37: {"sym":"Rb", "nome":"Rubídio",       "massa":85.468,  "cat":"Metal alcalino",    "periodo":5,"grupo":1,  "bloco":"s","estado":"sólido",  "config":"[Kr] 5s¹",
+         "en":0.82,  "raio":265,  "pe":688,   "pf":39.3,  "dens":1.532,    "desc":1861,"descob":"Robert Bunsen / Gustav Kirchhoff",
+         "ox":["+1"],"uses":"Relógios atômicos (Rb-87), células fotoelétricas, vidros de alta densidade óptica, pesquisa em condensados de Bose-Einstein"},
+    38: {"sym":"Sr", "nome":"Estrôncio",     "massa":87.62,   "cat":"Metal alcalino-terroso","periodo":5,"grupo":2,"bloco":"s","estado":"sólido","config":"[Kr] 5s²",
+         "en":0.95,  "raio":219,  "pe":1377,  "pf":777,   "dens":2.64,     "desc":1790,"descob":"Adair Crawford",
+         "ox":["+2"],"uses":"Fogos de artifício (chama carmesim vivo), ímãs de ferrita, perfuração petrolífera, Sr-90 (traçador radioativo, produto de fissão nuclear)"},
+    39: {"sym":"Y",  "nome":"Ítrio",         "massa":88.906,  "cat":"Metal de transição","periodo":5,"grupo":3,  "bloco":"d","estado":"sólido",  "config":"[Kr] 4d¹ 5s²",
+         "en":1.22,  "raio":212,  "pe":3345,  "pf":1522,  "dens":4.469,    "desc":1794,"descob":"Johan Gadolin",
+         "ox":["+3"],"uses":"Fósforos de LED e TV (YAG:Ce), lasers YAG:Nd, supercondutores YBCO, ligas de alumínio/magnésio endurecidas, estabilizador ZrO2"},
+    40: {"sym":"Zr", "nome":"Zircônio",      "massa":91.224,  "cat":"Metal de transição","periodo":5,"grupo":4,  "bloco":"d","estado":"sólido",  "config":"[Kr] 4d² 5s²",
+         "en":1.33,  "raio":206,  "pe":4409,  "pf":1855,  "dens":6.511,    "desc":1789,"descob":"Martin Heinrich Klaproth",
+         "ox":["+4"],"uses":"Revestimento de varetas de combustível nuclear (transparente a nêutrons), cerâmica ZrO2 (facas, implantes dentários), zircônia cúbica (bijuterias)"},
+    41: {"sym":"Nb", "nome":"Nióbio",        "massa":92.906,  "cat":"Metal de transição","periodo":5,"grupo":5,  "bloco":"d","estado":"sólido",  "config":"[Kr] 4d⁴ 5s¹",
+         "en":1.6,   "raio":198,  "pe":4744,  "pf":2477,  "dens":8.57,     "desc":1801,"descob":"Charles Hatchett",
+         "ox":["+5","+3"],"uses":"Aços microligados HSLA (dutos/plataformas petrolíferas), supercondutores (fio NbTi para MRI), moedas comemorativas brasileiras, joias"},
+    42: {"sym":"Mo", "nome":"Molibdênio",    "massa":95.96,   "cat":"Metal de transição","periodo":5,"grupo":6,  "bloco":"d","estado":"sólido",  "config":"[Kr] 4d⁵ 5s¹",
+         "en":2.16,  "raio":190,  "pe":4639,  "pf":2623,  "dens":10.28,    "desc":1778,"descob":"Carl Wilhelm Scheele",
+         "ox":["+6","+4","+3","+2"],"uses":"Aços de alta resistência (ferramentas de corte), lubrificante sólido MoS2, catalisadores de refinaria HDS, enzima nitrogenase (fixação N2 biológica)"},
+    43: {"sym":"Tc", "nome":"Tecnécio",      "massa":98,      "cat":"Metal de transição","periodo":5,"grupo":7,  "bloco":"d","estado":"sólido",  "config":"[Kr] 4d⁵ 5s²",
+         "en":1.9,   "raio":183,  "pe":4265,  "pf":2157,  "dens":11.5,     "desc":1937,"descob":"Emilio Segrè / Carlo Perrier",
+         "ox":["+7","+4"],"uses":"Medicina nuclear (99mTc — cintilografia cardíaca/óssea, t½=6h), anticorrosivo para tubulações de aço (teórico)"},
+    44: {"sym":"Ru", "nome":"Rutênio",       "massa":101.07,  "cat":"Metal de transição","periodo":5,"grupo":8,  "bloco":"d","estado":"sólido",  "config":"[Kr] 4d⁷ 5s¹",
+         "en":2.2,   "raio":178,  "pe":4150,  "pf":2334,  "dens":12.37,    "desc":1844,"descob":"Karl Ernst Claus",
+         "ox":["+8","+6","+4","+3","+2"],"uses":"Células solares Grätzel (corante Ru), catálise orgânica, eletrodos de cloro-álcali (RuO2), ligas de Pt para resistência"},
+    45: {"sym":"Rh", "nome":"Ródio",         "massa":102.906, "cat":"Metal de transição","periodo":5,"grupo":9,  "bloco":"d","estado":"sólido",  "config":"[Kr] 4d⁸ 5s¹",
+         "en":2.28,  "raio":173,  "pe":3695,  "pf":1964,  "dens":12.41,    "desc":1803,"descob":"William Hyde Wollaston",
+         "ox":["+3","+1"],"uses":"Catalisador de conversor catalítico automotivo (trio catalítico: Pt+Pd+Rh), joias de alta dureza, espelhos de alta refletividade"},
+    46: {"sym":"Pd", "nome":"Paládio",       "massa":106.42,  "cat":"Metal de transição","periodo":5,"grupo":10, "bloco":"d","estado":"sólido",  "config":"[Kr] 4d¹⁰",
+         "en":2.20,  "raio":169,  "pe":2963,  "pf":1555,  "dens":12.023,   "desc":1803,"descob":"William Hyde Wollaston",
+         "ox":["+2","+4"],"uses":"Conversores catalíticos, purificação de hidrogênio (membrana de Pd), ouro branco (liga Au-Pd), catálise de acoplamento cruzado (Nobel 2010)"},
+    47: {"sym":"Ag", "nome":"Prata",         "massa":107.868, "cat":"Metal de transição","periodo":5,"grupo":11, "bloco":"d","estado":"sólido",  "config":"[Kr] 4d¹⁰ 5s¹",
+         "en":1.93,  "raio":165,  "pe":2162,  "pf":961.8, "dens":10.49,    "desc":-5000,"descob":"Pré-histórico",
+         "ox":["+1"],"uses":"Joalheria, fotografia analógica (AgBr/AgCl), espelhos (melhor refletividade), moedas, antibacteriano (coloides de Ag), contatos elétricos"},
+    48: {"sym":"Cd", "nome":"Cádmio",        "massa":112.411, "cat":"Metal de transição","periodo":5,"grupo":12, "bloco":"d","estado":"sólido",  "config":"[Kr] 4d¹⁰ 5s²",
+         "en":1.69,  "raio":161,  "pe":767,   "pf":321.1, "dens":8.65,     "desc":1817,"descob":"Friedrich Stromeyer",
+         "ox":["+2"],"uses":"Pigmentos amarelo/laranja/vermelho (CdS, CdSe), baterias Ni-Cd recarregáveis, camadas anticorrosão, semicondutores CdTe para células solares"},
+    49: {"sym":"In", "nome":"Índio",         "massa":114.818, "cat":"Metal pós-transição","periodo":5,"grupo":13,"bloco":"p","estado":"sólido",  "config":"[Kr] 4d¹⁰ 5s² 5p¹",
+         "en":1.78,  "raio":156,  "pe":2072,  "pf":156.6, "dens":7.31,     "desc":1863,"descob":"Ferdinand Reich / Hieronymus Richter",
+         "ox":["+3"],"uses":"ITO (óxido de índio-estanho) em telas LCD/touch, soldas de baixo ponto de fusão, cojinetes de alta velocidade, células solares CIGS"},
+    50: {"sym":"Sn", "nome":"Estanho",       "massa":118.71,  "cat":"Metal pós-transição","periodo":5,"grupo":14,"bloco":"p","estado":"sólido",  "config":"[Kr] 4d¹⁰ 5s² 5p²",
+         "en":1.96,  "raio":145,  "pe":2602,  "pf":231.9, "dens":7.287,    "desc":-3500,"descob":"Pré-histórico",
+         "ox":["+4","+2"],"uses":"Latas de alimentos (folha de flandres Fe+Sn), bronze (Cu+Sn), solda elétrica (Sn+Ag+Cu ROHS), proteção anti-corrosão"},
+    51: {"sym":"Sb", "nome":"Antimônio",     "massa":121.76,  "cat":"Semimetal",         "periodo":5,"grupo":15, "bloco":"p","estado":"sólido",  "config":"[Kr] 4d¹⁰ 5s² 5p³",
+         "en":2.05,  "raio":133,  "pe":1587,  "pf":630.6, "dens":6.685,    "desc":815, "descob":"Jabir ibn Hayyan",
+         "ox":["+5","+3","-3"],"uses":"Retardantes de chama (Sb2O3), ligas de baterias de chumbo-ácido, semicondutores (InSb), pigmentos (vermelho de antimônio)"},
+    52: {"sym":"Te", "nome":"Telúrio",       "massa":127.60,  "cat":"Semimetal",         "periodo":5,"grupo":16, "bloco":"p","estado":"sólido",  "config":"[Kr] 4d¹⁰ 5s² 5p⁴",
+         "en":2.10,  "raio":123,  "pe":988,   "pf":449.5, "dens":6.232,    "desc":1782,"descob":"Franz-Joseph Müller von Reichenstein",
+         "ox":["-2","+4","+6"],"uses":"Painéis solares CdTe (First Solar), fitas de memória óptica (Blu-ray — Ge2Sb2Te5), liga de chumbo para baterias, catalisador"},
+    53: {"sym":"I",  "nome":"Iodo",          "massa":126.904, "cat":"Halogênio",         "periodo":5,"grupo":17, "bloco":"p","estado":"sólido",  "config":"[Kr] 4d¹⁰ 5s² 5p⁵",
+         "en":2.66,  "raio":115,  "pe":184.4, "pf":113.7, "dens":4.933,    "desc":1811,"descob":"Bernard Courtois",
+         "ox":["-1","+1","+5","+7"],"uses":"Antisséptico (tintura de iodo), hormônios tireoidianos (T3/T4), contraste radiológico (iodado), purificação de água, nutrição (sal iodado)"},
+    54: {"sym":"Xe", "nome":"Xenônio",       "massa":131.293, "cat":"Gás nobre",         "periodo":5,"grupo":18, "bloco":"p","estado":"gás",     "config":"[Kr] 4d¹⁰ 5s² 5p⁶",
+         "en":2.6,   "raio":108,  "pe":-108.1,"pf":-111.8,"dens":0.005897, "desc":1898,"descob":"William Ramsay / Morris Travers",
+         "ox":["0","+2","+4","+6","+8"],"uses":"Faróis HID de automóveis (Xe), lasers excimer, propulsor iônico de satélites (eficiência 10x H2), anestesia, câmara de bolhas"},
+    55: {"sym":"Cs", "nome":"Césio",         "massa":132.905, "cat":"Metal alcalino",    "periodo":6,"grupo":1,  "bloco":"s","estado":"sólido",  "config":"[Xe] 6s¹",
+         "en":0.79,  "raio":298,  "pe":671,   "pf":28.5,  "dens":1.93,     "desc":1860,"descob":"Robert Bunsen / Gustav Kirchhoff",
+         "ox":["+1"],"uses":"Relógios atômicos de césio (padrão do segundo SI: Cs-133 = 9.192.631.770 Hz), GPS, células fotoelétricas, perfuração de poços de petróleo"},
+    56: {"sym":"Ba", "nome":"Bário",         "massa":137.327, "cat":"Metal alcalino-terroso","periodo":6,"grupo":2,"bloco":"s","estado":"sólido","config":"[Xe] 6s²",
+         "en":0.89,  "raio":253,  "pe":1870,  "pf":729,   "dens":3.62,     "desc":1808,"descob":"Humphry Davy",
+         "ox":["+2"],"uses":"Contraste radiológico (BaSO4 — papinha de bário), fogos de artifício (chama verde), ímãs de bário-ferrita, vidros ópticos de alta densidade"},
+    57: {"sym":"La", "nome":"Lantânio",      "massa":138.905, "cat":"Lantanídeo",        "periodo":6,"grupo":3,  "bloco":"f","estado":"sólido",  "config":"[Xe] 5d¹ 6s²",
+         "en":1.10,  "raio":240,  "pe":3464,  "pf":920,   "dens":6.162,    "desc":1839,"descob":"Carl Gustaf Mosander",
+         "ox":["+3"],"uses":"Lentes de câmera/microscópio (vidros La), baterias NiMH (La-Ni5), catalisadores de craqueamento FCC, eletrodos de arco em iluminação cinematográfica"},
+    58: {"sym":"Ce", "nome":"Cério",         "massa":140.116, "cat":"Lantanídeo",        "periodo":6,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Xe] 4f¹ 5d¹ 6s²",
+         "en":1.12,  "raio":235,  "pe":3443,  "pf":798,   "dens":6.77,     "desc":1803,"descob":"Wilhelm Hisinger / Berzelius",
+         "ox":["+4","+3"],"uses":"Catalisadores de conversor catalítico (CeO2), pedras de isqueiro (mischmetal=Ce+La+Nd+Pr), polimento óptico (CeO2), pigmentos para vidro"},
+    59: {"sym":"Pr", "nome":"Praseodímio",   "massa":140.908, "cat":"Lantanídeo",        "periodo":6,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Xe] 4f³ 6s²",
+         "en":1.13,  "raio":239,  "pe":3520,  "pf":931,   "dens":6.77,     "desc":1885,"descob":"Carl Auer von Welsbach",
+         "ox":["+3","+4"],"uses":"Ímãs NdFeB (aditivo com Nd), óculos de proteção para soldadores (vidro Pr2O3 — filtro amarelo-verde), lasers, pigmentos amarelos para cerâmica"},
+    60: {"sym":"Nd", "nome":"Neodímio",      "massa":144.242, "cat":"Lantanídeo",        "periodo":6,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Xe] 4f⁴ 6s²",
+         "en":1.14,  "raio":229,  "pe":3074,  "pf":1021,  "dens":7.01,     "desc":1885,"descob":"Carl Auer von Welsbach",
+         "ox":["+3"],"uses":"Ímãs Nd2Fe14B (mais fortes do mundo — usados em EVs, geradores eólicos, HDs, fones Bluetooth), lasers Nd:YAG (cirurgia/industrial), vidros de filtro"},
+    61: {"sym":"Pm", "nome":"Promécio",      "massa":145,     "cat":"Lantanídeo",        "periodo":6,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Xe] 4f⁵ 6s²",
+         "en":None,  "raio":236,  "pe":3000,  "pf":1042,  "dens":7.26,     "desc":1945,"descob":"Jacob A. Marinsky",
+         "ox":["+3"],"uses":"Histórico: marcapassos beta-voltaicos (147Pm), fontes de raios-X portáteis; hoje: pesquisa nuclear (único lantanídeo sem isótopo estável)"},
+    62: {"sym":"Sm", "nome":"Samário",       "massa":150.36,  "cat":"Lantanídeo",        "periodo":6,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Xe] 4f⁶ 6s²",
+         "en":1.17,  "raio":229,  "pe":1794,  "pf":1072,  "dens":7.52,     "desc":1879,"descob":"Paul Emile Lecoq de Boisbaudran",
+         "ox":["+3","+2"],"uses":"Ímãs Sm-Co (resistentes a altas temperaturas — turbinas, armas guiadas), absorvedores de nêutrons em reatores, lasers Nd:YAG (Sm como supressor)"},
+    63: {"sym":"Eu", "nome":"Európio",       "massa":151.964, "cat":"Lantanídeo",        "periodo":6,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Xe] 4f⁷ 6s²",
+         "en":None,  "raio":233,  "pe":1529,  "pf":822,   "dens":5.244,    "desc":1901,"descob":"Eugène-Anatole Demarçay",
+         "ox":["+3","+2"],"uses":"Fósforos vermelhos de LEDs e TVs de plasma (Eu³⁺), notas de euro (tinta fluorescente anti-falsificação), dosímetros de radiação, lasers"},
+    64: {"sym":"Gd", "nome":"Gadolínio",     "massa":157.25,  "cat":"Lantanídeo",        "periodo":6,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Xe] 4f⁷ 5d¹ 6s²",
+         "en":1.20,  "raio":233,  "pe":3273,  "pf":1313,  "dens":7.90,     "desc":1880,"descob":"Jean Charles Galissard de Marignac",
+         "ox":["+3"],"uses":"Agente de contraste MRI (Gd-DTPA — realça imagens), absorvedor de nêutrons termais em reatores, fósforos de raios-X, refrigeração magnética"},
+    65: {"sym":"Tb", "nome":"Térbio",        "massa":158.925, "cat":"Lantanídeo",        "periodo":6,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Xe] 4f⁹ 6s²",
+         "en":None,  "raio":225,  "pe":3230,  "pf":1356,  "dens":8.23,     "desc":1843,"descob":"Carl Gustaf Mosander",
+         "ox":["+3","+4"],"uses":"Fósforos verdes de LEDs e lâmpadas fluorescentes (TbAG), ligas Terfenol-D (magnetoestricção, sonares, atuadores), lasers de estado sólido"},
+    66: {"sym":"Dy", "nome":"Disprósio",     "massa":162.5,   "cat":"Lantanídeo",        "periodo":6,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Xe] 4f¹⁰ 6s²",
+         "en":1.22,  "raio":228,  "pe":2567,  "pf":1412,  "dens":8.55,     "desc":1886,"descob":"Paul Emile Lecoq de Boisbaudran",
+         "ox":["+3"],"uses":"Ímãs NdFeB de alta temperatura (aditivo Dy — EVs, turbinas eólicas), lasers, dosimetria de nêutrons (detectores termoluminescentes)"},
+    67: {"sym":"Ho", "nome":"Hólmio",        "massa":164.930, "cat":"Lantanídeo",        "periodo":6,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Xe] 4f¹¹ 6s²",
+         "en":1.23,  "raio":226,  "pe":2700,  "pf":1474,  "dens":8.795,    "desc":1878,"descob":"Marc Delafontaine",
+         "ox":["+3"],"uses":"Lasers Ho:YAG (cirurgia urológica/litotripsia, oftalmologia), ímãs supercondutores (polo magnético de maior campo B), guias de onda óptica"},
+    68: {"sym":"Er", "nome":"Érbio",         "massa":167.259, "cat":"Lantanídeo",        "periodo":6,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Xe] 4f¹² 6s²",
+         "en":1.24,  "raio":226,  "pe":2868,  "pf":1529,  "dens":9.066,    "desc":1843,"descob":"Carl Gustaf Mosander",
+         "ox":["+3"],"uses":"Amplificadores de fibra óptica EDFA (Er³⁺ — backbone da Internet), lasers Er:YAG (dermatologia, cirurgia dental), pigmento róseo em vidros"},
+    69: {"sym":"Tm", "nome":"Túlio",         "massa":168.934, "cat":"Lantanídeo",        "periodo":6,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Xe] 4f¹³ 6s²",
+         "en":1.25,  "raio":222,  "pe":1950,  "pf":1545,  "dens":9.32,     "desc":1879,"descob":"Per Teodor Cleve",
+         "ox":["+3"],"uses":"Lasers médicos portáteis Tm:YAG (urologia, oftalmologia), fontes de raios-X portáteis (170Tm), feritas para dispositivos de microondas"},
+    70: {"sym":"Yb", "nome":"Itérbio",       "massa":173.054, "cat":"Lantanídeo",        "periodo":6,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Xe] 4f¹⁴ 6s²",
+         "en":None,  "raio":222,  "pe":1196,  "pf":819,   "dens":6.965,    "desc":1878,"descob":"Jean Charles Galissard de Marignac",
+         "ox":["+3","+2"],"uses":"Lasers de fibra Yb-dopado (Yb³⁺ — welding industrial), relógios atômicos ópticos de Yb (mais precisos que Cs), aditivo em ligas de aço"},
+    71: {"sym":"Lu", "nome":"Lutécio",       "massa":174.967, "cat":"Lantanídeo",        "periodo":6,"grupo":3,  "bloco":"f","estado":"sólido",  "config":"[Xe] 4f¹⁴ 5d¹ 6s²",
+         "en":1.27,  "raio":217,  "pe":3402,  "pf":1663,  "dens":9.841,    "desc":1907,"descob":"Georges Urbain",
+         "ox":["+3"],"uses":"Cintiladores PET (Lu2SiO5:Ce — detectores de câncer), catalisadores de refinaria de petróleo, lasers, iluminação LED eficiente"},
+    72: {"sym":"Hf", "nome":"Háfnio",        "massa":178.49,  "cat":"Metal de transição","periodo":6,"grupo":4,  "bloco":"d","estado":"sólido",  "config":"[Xe] 4f¹⁴ 5d² 6s²",
+         "en":1.3,   "raio":208,  "pe":4603,  "pf":2233,  "dens":13.31,    "desc":1923,"descob":"Dirk Coster / George Charles de Hevesy",
+         "ox":["+4"],"uses":"Barras de controle de reatores nucleares (alta seção de captura), filamentos de lâmpadas, dielétrico HfO2 em transistores CMOS (Intel 45nm+)"},
+    73: {"sym":"Ta", "nome":"Tântalo",       "massa":180.948, "cat":"Metal de transição","periodo":6,"grupo":5,  "bloco":"d","estado":"sólido",  "config":"[Xe] 4f¹⁴ 5d³ 6s²",
+         "en":1.5,   "raio":200,  "pe":5458,  "pf":3017,  "dens":16.69,    "desc":1802,"descob":"Anders Gustaf Ekeberg",
+         "ox":["+5"],"uses":"Capacitores de tântalo (celulares/notebooks — 40% da produção), equipamentos cirúrgicos (biocompatível), superligas de Ni para turbinas a jato"},
+    74: {"sym":"W",  "nome":"Tungstênio",    "massa":183.84,  "cat":"Metal de transição","periodo":6,"grupo":6,  "bloco":"d","estado":"sólido",  "config":"[Xe] 4f¹⁴ 5d⁴ 6s²",
+         "en":2.36,  "raio":193,  "pe":5555,  "pf":3422,  "dens":19.25,    "desc":1783,"descob":"Carl Wilhelm Scheele",
+         "ox":["+6","+4","+2"],"uses":"Filamentos de lâmpada incandescente (pf mais alto entre metais: 3422°C), aço-W para brocas/fresas, eletrodos de soldagem TIG, projéteis perfurantes"},
+    75: {"sym":"Re", "nome":"Rênio",         "massa":186.207, "cat":"Metal de transição","periodo":6,"grupo":7,  "bloco":"d","estado":"sólido",  "config":"[Xe] 4f¹⁴ 5d⁵ 6s²",
+         "en":1.9,   "raio":188,  "pe":5596,  "pf":3186,  "dens":21.02,    "desc":1925,"descob":"Walter Noddack / Ida Tacke",
+         "ox":["+7","+4"],"uses":"Superligas monocristalinas Ni-Re para turbinas a jato de alta temperatura (Rolls-Royce, GE), catalisadores Pt-Re para reforma de nafta"},
+    76: {"sym":"Os", "nome":"Ósmio",         "massa":190.23,  "cat":"Metal de transição","periodo":6,"grupo":8,  "bloco":"d","estado":"sólido",  "config":"[Xe] 4f¹⁴ 5d⁶ 6s²",
+         "en":2.2,   "raio":185,  "pe":5012,  "pf":3033,  "dens":22.59,    "desc":1803,"descob":"Smithson Tennant",
+         "ox":["+8","+4"],"uses":"Metal mais denso (22,59 g/cm³), ligas Pt-Os (pontas de canetas-tinteiro e instrumentos cirúrgicos resistentes), coloração em microscopia eletrônica (OsO4)"},
+    77: {"sym":"Ir", "nome":"Irídio",        "massa":192.217, "cat":"Metal de transição","periodo":6,"grupo":9,  "bloco":"d","estado":"sólido",  "config":"[Xe] 4f¹⁴ 5d⁷ 6s²",
+         "en":2.20,  "raio":180,  "pe":4428,  "pf":2446,  "dens":22.56,    "desc":1803,"descob":"Smithson Tennant",
+         "ox":["+4","+3"],"uses":"Protótipo internacional do quilograma (liga Pt-Ir 90/10), velas de ignição de alto desempenho, catalisadores OLED, marcador da extinção K-Pg (camada de Ir)"},
+    78: {"sym":"Pt", "nome":"Platina",       "massa":195.084, "cat":"Metal de transição","periodo":6,"grupo":10, "bloco":"d","estado":"sólido",  "config":"[Xe] 4f¹⁴ 5d⁹ 6s¹",
+         "en":2.28,  "raio":177,  "pe":3825,  "pf":1768.3,"dens":21.45,    "desc":1735,"descob":"Antonio de Ulloa",
+         "ox":["+4","+2"],"uses":"Conversores catalíticos automotivos, joias, eletrodos de células a combustível H2, cisplatina (quimioterapia de câncer), termopar Pt-Rh (medição de alta temperatura)"},
+    79: {"sym":"Au", "nome":"Ouro",          "massa":196.967, "cat":"Metal de transição","periodo":6,"grupo":11, "bloco":"d","estado":"sólido",  "config":"[Xe] 4f¹⁴ 5d¹⁰ 6s¹",
+         "en":2.54,  "raio":174,  "pe":2856,  "pf":1064.2,"dens":19.30,    "desc":-6000,"descob":"Pré-histórico",
+         "ox":["+3","+1"],"uses":"Joias, reservas monetárias (padrão ouro histórico), contatos elétricos de alta confiabilidade (chips, conectores), nanopartículas Au (diagnóstico/terapia câncer)"},
+    80: {"sym":"Hg", "nome":"Mercúrio",      "massa":200.59,  "cat":"Metal de transição","periodo":6,"grupo":12, "bloco":"d","estado":"líquido", "config":"[Xe] 4f¹⁴ 5d¹⁰ 6s²",
+         "en":2.00,  "raio":171,  "pe":356.7, "pf":-38.8, "dens":13.534,   "desc":-1500,"descob":"Pré-histórico",
+         "ox":["+2","+1"],"uses":"Termômetros e barômetros (histórico — tóxico), lâmpadas fluorescentes e de vapor de Hg, amalgama dentário (em retirada), interruptores de Hg"},
+    81: {"sym":"Tl", "nome":"Tálio",         "massa":204.383, "cat":"Metal pós-transição","periodo":6,"grupo":13,"bloco":"p","estado":"sólido",  "config":"[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p¹",
+         "en":1.62,  "raio":156,  "pe":1473,  "pf":304,   "dens":11.85,    "desc":1861,"descob":"William Crookes",
+         "ox":["+3","+1"],"uses":"Detectores de radiação TlBr e TlI, cintilografia cardíaca (201Tl — estresse miocárdico), vidros especiais de alto índice de refração, histórico: raticida (sulfato de Tl)"},
+    82: {"sym":"Pb", "nome":"Chumbo",        "massa":207.2,   "cat":"Metal pós-transição","periodo":6,"grupo":14,"bloco":"p","estado":"sólido",  "config":"[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p²",
+         "en":2.33,  "raio":154,  "pe":1749,  "pf":327.5, "dens":11.34,    "desc":-6500,"descob":"Pré-histórico",
+         "ox":["+4","+2"],"uses":"Baterias chumbo-ácido (automóveis — 80% do consumo), blindagem de radiação (raios-X, reatores), pesos de calibração, solda (Pb-Sn histórico), chumbo de munição"},
+    83: {"sym":"Bi", "nome":"Bismuto",       "massa":208.980, "cat":"Metal pós-transição","periodo":6,"grupo":15,"bloco":"p","estado":"sólido",  "config":"[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p³",
+         "en":2.02,  "raio":143,  "pe":1564,  "pf":271.5, "dens":9.78,     "desc":1753,"descob":"Claude François Geoffroy",
+         "ox":["+5","+3"],"uses":"Pepto-Bismol (subsalicilato de Bi — antiácido/antidiarreico), ligas Wood/Rose (fusíveis de baixo pf), cosméticos (oxicloreto de Bi), substituto do chumbo"},
+    84: {"sym":"Po", "nome":"Polônio",       "massa":209,     "cat":"Metal pós-transição","periodo":6,"grupo":16,"bloco":"p","estado":"sólido",  "config":"[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁴",
+         "en":2.0,   "raio":135,  "pe":962,   "pf":254,   "dens":9.196,    "desc":1898,"descob":"Marie e Pierre Curie",
+         "ox":["+4","+2"],"uses":"Eliminadores estáticos industriais (210Po — emissor α), fontes de calor RTG (Lunik, satélites soviéticos), isca de nêutrons em armas nucleares, caso Litvinenko (assassinato 2006)"},
+    85: {"sym":"At", "nome":"Astato",        "massa":210,     "cat":"Halogênio",         "periodo":6,"grupo":17, "bloco":"p","estado":"sólido",  "config":"[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁵",
+         "en":2.2,   "raio":127,  "pe":337,   "pf":302,   "dens":None,     "desc":1940,"descob":"Dale R. Corson / K.R. MacKenzie / E. Segrè",
+         "ox":["-1","+1","+5","+7"],"uses":"Medicina nuclear (211At — terapia alfa para câncer de tireoide), pesquisa sobre halogênios pesados; elemento mais escasso na crosta terrestre"},
+    86: {"sym":"Rn", "nome":"Radônio",       "massa":222,     "cat":"Gás nobre",         "periodo":6,"grupo":18, "bloco":"p","estado":"gás",     "config":"[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁶",
+         "en":2.2,   "raio":120,  "pe":-61.7, "pf":-71,   "dens":0.00973,  "desc":1900,"descob":"Friedrich Ernst Dorn",
+         "ox":["0","+2"],"uses":"Radon terapia (histórico), detecção de falhas geológicas (traçador), risco à saúde em residências (2ª causa de câncer de pulmão nos EUA após tabagismo)"},
+    87: {"sym":"Fr", "nome":"Frâncio",       "massa":223,     "cat":"Metal alcalino",    "periodo":7,"grupo":1,  "bloco":"s","estado":"sólido",  "config":"[Rn] 7s¹",
+         "en":0.7,   "raio":348,  "pe":677,   "pf":27,    "dens":None,     "desc":1939,"descob":"Marguerite Perey",
+         "ox":["+1"],"uses":"Somente pesquisa científica (t½=22 min para 223Fr; máx ~10.000 átomos em toda a crosta terrestre simultaneamente), espectroscopia atômica de precisão"},
+    88: {"sym":"Ra", "nome":"Rádio",         "massa":226,     "cat":"Metal alcalino-terroso","periodo":7,"grupo":2,"bloco":"s","estado":"sólido","config":"[Rn] 7s²",
+         "en":0.9,   "raio":283,  "pe":1737,  "pf":700,   "dens":5.5,      "desc":1898,"descob":"Marie e Pierre Curie",
+         "ox":["+2"],"uses":"Radioterapia histórica (226Ra — substituído por aceleradores), tinta luminescente 'Radium dial' (histórico — causou morte de pintoras), pesquisa em física nuclear"},
+    89: {"sym":"Ac", "nome":"Actínio",       "massa":227,     "cat":"Actinídeo",         "periodo":7,"grupo":3,  "bloco":"f","estado":"sólido",  "config":"[Rn] 6d¹ 7s²",
+         "en":1.1,   "raio":260,  "pe":3198,  "pf":1050,  "dens":10.07,    "desc":1899,"descob":"André-Louis Debierne",
+         "ox":["+3"],"uses":"225Ac para terapia alfa dirigida (oncologia — altamente promissor), fonte de nêutrons em pesquisa, traçador radiológico geoquímico"},
+    90: {"sym":"Th", "nome":"Tório",         "massa":232.038, "cat":"Actinídeo",         "periodo":7,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Rn] 6d² 7s²",
+         "en":1.3,   "raio":237,  "pe":4788,  "pf":1750,  "dens":11.72,    "desc":1829,"descob":"Jöns Jacob Berzelius",
+         "ox":["+4"],"uses":"Combustível nuclear em reatores de sais fundidos (ThF4/UF4), mantas de lampião Welsbach (ThO2 — histórico), ligas W-Th para eletrodos de soldagem TIG"},
+    91: {"sym":"Pa", "nome":"Protactínio",   "massa":231.036, "cat":"Actinídeo",         "periodo":7,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Rn] 5f² 6d¹ 7s²",
+         "en":1.5,   "raio":243,  "pe":4027,  "pf":1568,  "dens":15.37,    "desc":1913,"descob":"Fajans / Göhring",
+         "ox":["+5","+4"],"uses":"Datação geocronológica por razão Pa/U (sedimentos marinhos), produção de 233U (ciclo do tório), pesquisa fundamental em química dos actinídeos"},
+    92: {"sym":"U",  "nome":"Urânio",        "massa":238.029, "cat":"Actinídeo",         "periodo":7,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Rn] 5f³ 6d¹ 7s²",
+         "en":1.38,  "raio":240,  "pe":4131,  "pf":1135,  "dens":19.1,     "desc":1789,"descob":"Martin Heinrich Klaproth",
+         "ox":["+6","+5","+4","+3"],"uses":"Combustível nuclear (235U — fissão; enriquecido 3-5%), blindagem por densidade (U empobrecido — munição antipercevante), vidro uranyl (fluorescente)"},
+    93: {"sym":"Np", "nome":"Neptúnio",      "massa":237,     "cat":"Actinídeo",         "periodo":7,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Rn] 5f⁴ 6d¹ 7s²",
+         "en":1.36,  "raio":221,  "pe":4000,  "pf":644,   "dens":20.45,    "desc":1940,"descob":"Edwin McMillan / Philip Abelson",
+         "ox":["+6","+5","+4","+3"],"uses":"Produção de 238Pu (combustível de RTGs para sondas espaciais), detectores de nêutrons rápidos, primeiro elemento transuraniano descoberto"},
+    94: {"sym":"Pu", "nome":"Plutônio",      "massa":244,     "cat":"Actinídeo",         "periodo":7,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Rn] 5f⁶ 7s²",
+         "en":1.28,  "raio":243,  "pe":3228,  "pf":640,   "dens":19.816,   "desc":1940,"descob":"Glenn T. Seaborg",
+         "ox":["+6","+5","+4","+3"],"uses":"Armas nucleares (239Pu — bomba de implosão), RTGs espaciais (238Pu — Voyager, Curiosity, New Horizons), combustível MOX em reatores"},
+    95: {"sym":"Am", "nome":"Amerício",      "massa":243,     "cat":"Actinídeo",         "periodo":7,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Rn] 5f⁷ 7s²",
+         "en":1.3,   "raio":244,  "pe":2607,  "pf":1176,  "dens":13.67,    "desc":1944,"descob":"Glenn T. Seaborg",
+         "ox":["+6","+5","+4","+3"],"uses":"Detectores de fumaça iônicos domésticos (241Am — emissor α ioniza o ar), fontes portáteis de raios-γ (241Am), pesquisa em química de actinídeos"},
+    96: {"sym":"Cm", "nome":"Cúrio",         "massa":247,     "cat":"Actinídeo",         "periodo":7,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Rn] 5f⁷ 6d¹ 7s²",
+         "en":1.3,   "raio":245,  "pe":3110,  "pf":1345,  "dens":13.51,    "desc":1944,"descob":"Glenn T. Seaborg",
+         "ox":["+4","+3"],"uses":"RTG em missão Cassini (242Cm), espectrômetro APXS nos Mars Rovers (244Cm — analisa rochas marcianas), produção de Cf-252"},
+    97: {"sym":"Bk", "nome":"Berquélio",     "massa":247,     "cat":"Actinídeo",         "periodo":7,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Rn] 5f⁹ 7s²",
+         "en":1.3,   "raio":244,  "pe":2627,  "pf":986,   "dens":14.79,    "desc":1949,"descob":"Glenn T. Seaborg",
+         "ox":["+4","+3"],"uses":"Produção de elementos superpesados (249Bk + 48Ca → Og, Ts), pesquisa fundamental em actinídeos"},
+    98: {"sym":"Cf", "nome":"Califórnio",    "massa":251,     "cat":"Actinídeo",         "periodo":7,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Rn] 5f¹⁰ 7s²",
+         "en":1.3,   "raio":245,  "pe":1472,  "pf":900,   "dens":15.1,     "desc":1950,"descob":"Glenn T. Seaborg",
+         "ox":["+4","+3"],"uses":"Iniciador de reatores nucleares (252Cf — forte emissor de nêutrons), análise PGNAA (detecção de explosivos/mineração), braquiterapia com nêutrons (câncer cervical)"},
+    99: {"sym":"Es", "nome":"Einstênio",     "massa":252,     "cat":"Actinídeo",         "periodo":7,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Rn] 5f¹¹ 7s²",
+         "en":1.3,   "raio":245,  "pe":996,   "pf":860,   "dens":None,     "desc":1952,"descob":"Albert Ghiorso (detrito bomba H — Ivy Mike)",
+         "ox":["+3"],"uses":"Pesquisa científica fundamental; produção muito limitada (µg/ano em reatores); síntese de Fm e elementos mais pesados"},
+    100:{"sym":"Fm", "nome":"Férmio",        "massa":257,     "cat":"Actinídeo",         "periodo":7,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Rn] 5f¹² 7s²",
+         "en":1.3,   "raio":245,  "pe":None,  "pf":1527,  "dens":None,     "desc":1952,"descob":"Albert Ghiorso",
+         "ox":["+3"],"uses":"Pesquisa nuclear fundamental; maior actinídeo produzível em quantidades ponderáveis em reator; sem uso comercial"},
+    101:{"sym":"Md", "nome":"Mendelévio",    "massa":258,     "cat":"Actinídeo",         "periodo":7,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Rn] 5f¹³ 7s²",
+         "en":1.3,   "raio":246,  "pe":None,  "pf":827,   "dens":None,     "desc":1955,"descob":"Glenn T. Seaborg",
+         "ox":["+3","+2"],"uses":"Pesquisa científica — produzido em quantidade de átomos individuais; homenagem a Mendeleev"},
+    102:{"sym":"No", "nome":"Nobélio",       "massa":259,     "cat":"Actinídeo",         "periodo":7,"grupo":None,"bloco":"f","estado":"sólido", "config":"[Rn] 5f¹⁴ 7s²",
+         "en":1.3,   "raio":246,  "pe":None,  "pf":827,   "dens":None,     "desc":1957,"descob":"Flerov / Nobel Institute",
+         "ox":["+3","+2"],"uses":"Pesquisa nuclear fundamental; nome homenageia Alfred Nobel"},
+    103:{"sym":"Lr", "nome":"Laurêncio",     "massa":262,     "cat":"Actinídeo",         "periodo":7,"grupo":3,  "bloco":"d","estado":"sólido",  "config":"[Rn] 5f¹⁴ 7s² 7p¹",
+         "en":None,  "raio":246,  "pe":None,  "pf":1627,  "dens":None,     "desc":1961,"descob":"Albert Ghiorso",
+         "ox":["+3"],"uses":"Pesquisa em química dos actinídeos; vida útil <1h; homenageia Ernest Lawrence (inventor do cíclotron)"},
+    104:{"sym":"Rf", "nome":"Rutherfórdio",  "massa":265,     "cat":"Metal de transição","periodo":7,"grupo":4,  "bloco":"d","estado":"sólido",  "config":"[Rn] 5f¹⁴ 6d² 7s²",
+         "en":None,  "raio":None, "pe":None,  "pf":None,  "dens":None,     "desc":1964,"descob":"JINR Dubna / LBNL Berkeley",
+         "ox":["+4"],"uses":"Pesquisa científica fundamental; homenageia Ernest Rutherford"},
+    105:{"sym":"Db", "nome":"Dúbnio",        "massa":268,     "cat":"Metal de transição","periodo":7,"grupo":5,  "bloco":"d","estado":"sólido",  "config":"[Rn] 5f¹⁴ 6d³ 7s²",
+         "en":None,  "raio":None, "pe":None,  "pf":None,  "dens":None,     "desc":1967,"descob":"JINR / LBNL",
+         "ox":["+5"],"uses":"Pesquisa nuclear; nome vem de Dubna (Rússia)"},
+    106:{"sym":"Sg", "nome":"Seabórgio",     "massa":271,     "cat":"Metal de transição","periodo":7,"grupo":6,  "bloco":"d","estado":"sólido",  "config":"[Rn] 5f¹⁴ 6d⁴ 7s²",
+         "en":None,  "raio":None, "pe":None,  "pf":None,  "dens":None,     "desc":1974,"descob":"Albert Ghiorso / LBNL",
+         "ox":["+6"],"uses":"Pesquisa nuclear; homenageia Glenn T. Seaborg"},
+    107:{"sym":"Bh", "nome":"Bóhrio",        "massa":272,     "cat":"Metal de transição","periodo":7,"grupo":7,  "bloco":"d","estado":"sólido",  "config":"[Rn] 5f¹⁴ 6d⁵ 7s²",
+         "en":None,  "raio":None, "pe":None,  "pf":None,  "dens":None,     "desc":1981,"descob":"GSI Darmstadt",
+         "ox":["+7"],"uses":"Pesquisa nuclear; homenageia Niels Bohr"},
+    108:{"sym":"Hs", "nome":"Hássio",        "massa":270,     "cat":"Metal de transição","periodo":7,"grupo":8,  "bloco":"d","estado":"sólido",  "config":"[Rn] 5f¹⁴ 6d⁶ 7s²",
+         "en":None,  "raio":None, "pe":None,  "pf":None,  "dens":None,     "desc":1984,"descob":"GSI Darmstadt",
+         "ox":["+8"],"uses":"Pesquisa nuclear; nome vem de Hassias (Hesse, Alemanha)"},
+    109:{"sym":"Mt", "nome":"Meitnério",     "massa":276,     "cat":"Desconhecido",      "periodo":7,"grupo":9,  "bloco":"d","estado":"sólido",  "config":"[Rn] 5f¹⁴ 6d⁷ 7s²",
+         "en":None,  "raio":None, "pe":None,  "pf":None,  "dens":None,     "desc":1982,"descob":"GSI Darmstadt",
+         "ox":[],"uses":"Pesquisa nuclear; homenageia Lise Meitner (pioneira em fissão nuclear)"},
+    110:{"sym":"Ds", "nome":"Darmstádio",    "massa":281,     "cat":"Desconhecido",      "periodo":7,"grupo":10, "bloco":"d","estado":"sólido",  "config":"[Rn] 5f¹⁴ 6d⁸ 7s²",
+         "en":None,  "raio":None, "pe":None,  "pf":None,  "dens":None,     "desc":1994,"descob":"GSI Darmstadt",
+         "ox":[],"uses":"Pesquisa nuclear; nome vem de Darmstadt (Alemanha)"},
+    111:{"sym":"Rg", "nome":"Roentgênio",    "massa":280,     "cat":"Desconhecido",      "periodo":7,"grupo":11, "bloco":"d","estado":"sólido",  "config":"[Rn] 5f¹⁴ 6d¹⁰ 7s¹",
+         "en":None,  "raio":None, "pe":None,  "pf":None,  "dens":None,     "desc":1994,"descob":"GSI Darmstadt",
+         "ox":[],"uses":"Pesquisa nuclear; homenageia Wilhelm Röntgen (descobridor dos raios X)"},
+    112:{"sym":"Cn", "nome":"Copernício",    "massa":285,     "cat":"Metal de transição","periodo":7,"grupo":12, "bloco":"d","estado":"gás",     "config":"[Rn] 5f¹⁴ 6d¹⁰ 7s²",
+         "en":None,  "raio":None, "pe":None,  "pf":None,  "dens":None,     "desc":1996,"descob":"GSI Darmstadt",
+         "ox":["+2"],"uses":"Pesquisa nuclear; homenageia Nicolau Copérnico"},
+    113:{"sym":"Nh", "nome":"Nihônio",       "massa":284,     "cat":"Metal pós-transição","periodo":7,"grupo":13,"bloco":"p","estado":"sólido",  "config":"[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p¹",
+         "en":None,  "raio":None, "pe":None,  "pf":None,  "dens":None,     "desc":2003,"descob":"RIKEN Japan",
+         "ox":["+1"],"uses":"Pesquisa nuclear; primeiro elemento sintetizado na Ásia; nome homenageia o Japão (nihon=日本)"},
+    114:{"sym":"Fl", "nome":"Fleróvio",      "massa":289,     "cat":"Metal pós-transição","periodo":7,"grupo":14,"bloco":"p","estado":"sólido",  "config":"[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p²",
+         "en":None,  "raio":None, "pe":None,  "pf":None,  "dens":None,     "desc":1999,"descob":"JINR Dubna",
+         "ox":["+2","+4"],"uses":"Pesquisa nuclear; homenageia Flerov Laboratory of Nuclear Reactions e Georgiy Flyorov"},
+    115:{"sym":"Mc", "nome":"Moscóvio",      "massa":288,     "cat":"Metal pós-transição","periodo":7,"grupo":15,"bloco":"p","estado":"sólido",  "config":"[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p³",
+         "en":None,  "raio":None, "pe":None,  "pf":None,  "dens":None,     "desc":2003,"descob":"JINR / LLNL",
+         "ox":["+1","+3"],"uses":"Pesquisa nuclear; nome homenageia a região de Moscou"},
+    116:{"sym":"Lv", "nome":"Livermório",    "massa":293,     "cat":"Metal pós-transição","periodo":7,"grupo":16,"bloco":"p","estado":"sólido",  "config":"[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁴",
+         "en":None,  "raio":None, "pe":None,  "pf":None,  "dens":None,     "desc":2000,"descob":"JINR / LLNL",
+         "ox":["+2","+4"],"uses":"Pesquisa nuclear; homenageia o Lawrence Livermore National Laboratory"},
+    117:{"sym":"Ts", "nome":"Tenessino",     "massa":294,     "cat":"Halogênio",         "periodo":7,"grupo":17, "bloco":"p","estado":"sólido",  "config":"[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁵",
+         "en":None,  "raio":None, "pe":None,  "pf":None,  "dens":None,     "desc":2010,"descob":"JINR / ORNL / Vanderbilt",
+         "ox":["-1","+1","+3","+5"],"uses":"Pesquisa nuclear; nome homenageia o estado do Tennessee (Oak Ridge, Vanderbilt)"},
+    118:{"sym":"Og", "nome":"Oganessônio",   "massa":294,     "cat":"Gás nobre",         "periodo":7,"grupo":18, "bloco":"p","estado":"gás",     "config":"[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁶",
+         "en":None,  "raio":None, "pe":None,  "pf":None,  "dens":None,     "desc":2002,"descob":"JINR / LLNL",
+         "ox":["0","+2","+4"],"uses":"Elemento mais pesado confirmado; homenageia Yuri Oganessian; possivelmente sólido a temperatura ambiente (relativístico); t½≈5ms"},
+}
+
+# Índice reverso
+_SYM_TO_Z = {v["sym"].upper(): k for k, v in ELEMENTOS.items()}
+_NOME_TO_Z = {v["nome"].lower(): k for k, v in ELEMENTOS.items()}
+
+def buscar_elemento(query: str) -> Optional[dict]:
+    q = query.strip()
+    # Por número atômico
+    try:
+        z = int(q)
+        if z in ELEMENTOS:
+            return ELEMENTOS[z]
+    except ValueError:
+        pass
+    # Por símbolo
+    if q.upper() in _SYM_TO_Z:
+        return ELEMENTOS[_SYM_TO_Z[q.upper()]]
+    # Por nome
+    if q.lower() in _NOME_TO_Z:
+        return ELEMENTOS[_NOME_TO_Z[q.lower()]]
+    # Busca parcial por nome
+    for k, v in ELEMENTOS.items():
+        if q.lower() in v["nome"].lower():
+            return v
+    return None
+
+def exibir_elemento(el: dict):
+    print(titulo(f"  {el['sym']}  —  {el['nome']}  (Z = {list(ELEMENTOS.keys())[list(v['sym'] for v in ELEMENTOS.values()).index(el['sym'])]})", 78))
+    print()
+    print(f"  {cor('Categoria:',C.GRAY):<25} {cor(el['cat'], C.YELLOW)}")
+    print(f"  {cor('Período / Grupo:', C.GRAY):<25} {el['periodo']} / {el['grupo'] or '—'}")
+    print(f"  {cor('Bloco:', C.GRAY):<25} {el['bloco']}-bloco")
+    print(f"  {cor('Estado (25°C):', C.GRAY):<25} {el['estado']}")
+    separador()
+    print(f"  {cor('Massa atômica:', C.GRAY):<25} {cor(str(el['massa']) + ' u', C.GREEN)}")
+    print(f"  {cor('Eletronegatividade:', C.GRAY):<25} {cor(str(el['en']) if el['en'] else '—', C.GREEN)}")
+    print(f"  {cor('Raio atômico:', C.GRAY):<25} {cor(str(el['raio']) + ' pm' if el['raio'] else '—', C.GREEN)}")
+    print(f"  {cor('Ponto de fusão:', C.GRAY):<25} {cor(str(el['pf']) + ' °C' if el['pf'] is not None else '—', C.GREEN)}")
+    print(f"  {cor('Ponto de ebulição:', C.GRAY):<25} {cor(str(el['pe']) + ' °C' if el['pe'] is not None else '—', C.GREEN)}")
+    print(f"  {cor('Densidade:', C.GRAY):<25} {cor(str(el['dens']) + ' g/cm³' if el['dens'] else '—', C.GREEN)}")
+    separador()
+    print(f"  {cor('Config. eletrônica:', C.GRAY):<25} {cor(el['config'], C.CYAN)}")
+    print(f"  {cor('Nox comuns:', C.GRAY):<25} {cor(', '.join(el['ox']) if el['ox'] else '—', C.MAGENTA)}")
+    print(f"  {cor('Descoberta:', C.GRAY):<25} {cor(str(el['desc']).replace('-', 'ca. ') + ' — ' + el['descob'], C.BLUE)}")
+    separador()
+    print(f"  {cor('Usos:', C.GRAY)}")
+    # Quebra em linhas de ~70 chars
+    palavras = el['uses'].split(', ')
+    linha_atual = "  "
+    for p in palavras:
+        if len(linha_atual) + len(p) > 72:
+            print(cor(linha_atual, C.WHITE))
+            linha_atual = "    " + p + ", "
+        else:
+            linha_atual += p + ", "
+    if linha_atual.strip(", "):
+        print(cor(linha_atual.rstrip(", "), C.WHITE))
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ÁCIDOS E BASES PARA NEUTRALIZAÇÃO
+# ─────────────────────────────────────────────────────────────────────────────
+ACIDOS = {
+    "HCl":     {"n":1, "nome":"Ácido clorídrico",     "anion":"Cl⁻",   "salt":"Cloreto",       "tipo":"forte"},
+    "HNO3":    {"n":1, "nome":"Ácido nítrico",         "anion":"NO₃⁻",  "salt":"Nitrato",       "tipo":"forte"},
+    "HBr":     {"n":1, "nome":"Ácido bromídrico",      "anion":"Br⁻",   "salt":"Brometo",       "tipo":"forte"},
+    "HI":      {"n":1, "nome":"Ácido iodídrico",       "anion":"I⁻",    "salt":"Iodeto",        "tipo":"forte"},
+    "HF":      {"n":1, "nome":"Ácido fluorídrico",     "anion":"F⁻",    "salt":"Fluoreto",      "tipo":"fraco"},
+    "HClO4":   {"n":1, "nome":"Ácido perclórico",      "anion":"ClO₄⁻", "salt":"Perclorato",    "tipo":"forte"},
+    "HClO3":   {"n":1, "nome":"Ácido clórico",         "anion":"ClO₃⁻", "salt":"Clorato",       "tipo":"forte"},
+    "HClO2":   {"n":1, "nome":"Ácido cloroso",         "anion":"ClO₂⁻", "salt":"Clorito",       "tipo":"fraco"},
+    "HClO":    {"n":1, "nome":"Ácido hipocloroso",     "anion":"ClO⁻",  "salt":"Hipoclorito",   "tipo":"fraco"},
+    "HCN":     {"n":1, "nome":"Ácido cianídrico",      "anion":"CN⁻",   "salt":"Cianeto",       "tipo":"fraco"},
+    "HMnO4":   {"n":1, "nome":"Ácido permangânico",    "anion":"MnO₄⁻", "salt":"Permanganato",  "tipo":"forte"},
+    "CH3COOH": {"n":1, "nome":"Ácido acético",         "anion":"CH₃COO⁻","salt":"Acetato",      "tipo":"fraco"},
+    "HCOOH":   {"n":1, "nome":"Ácido fórmico",         "anion":"HCOO⁻", "salt":"Formiato",      "tipo":"fraco"},
+    "H2SO4":   {"n":2, "nome":"Ácido sulfúrico",       "anion":"SO₄²⁻", "salt":"Sulfato",       "tipo":"forte"},
+    "H2SO3":   {"n":2, "nome":"Ácido sulfuroso",       "anion":"SO₃²⁻", "salt":"Sulfito",       "tipo":"fraco"},
+    "H2S":     {"n":2, "nome":"Ácido sulfídrico",      "anion":"S²⁻",   "salt":"Sulfeto",       "tipo":"fraco"},
+    "H2CO3":   {"n":2, "nome":"Ácido carbônico",       "anion":"CO₃²⁻", "salt":"Carbonato",     "tipo":"fraco"},
+    "H2CrO4":  {"n":2, "nome":"Ácido crômico",         "anion":"CrO₄²⁻","salt":"Cromato",       "tipo":"forte"},
+    "H2C2O4":  {"n":2, "nome":"Ácido oxálico",         "anion":"C₂O₄²⁻","salt":"Oxalato",       "tipo":"fraco"},
+    "H3PO4":   {"n":3, "nome":"Ácido fosfórico",       "anion":"PO₄³⁻", "salt":"Fosfato",       "tipo":"fraco"},
+    "H3BO3":   {"n":3, "nome":"Ácido bórico",          "anion":"BO₃³⁻", "salt":"Borato",        "tipo":"fraco"},
+    "H3AsO4":  {"n":3, "nome":"Ácido arsênico",        "anion":"AsO₄³⁻","salt":"Arseniato",     "tipo":"fraco"},
+}
+
+BASES = {
+    "NaOH":      {"n":1, "nome":"Hidróxido de sódio",       "cation":"Na⁺",   "tipo":"forte"},
+    "KOH":       {"n":1, "nome":"Hidróxido de potássio",    "cation":"K⁺",    "tipo":"forte"},
+    "LiOH":      {"n":1, "nome":"Hidróxido de lítio",       "cation":"Li⁺",   "tipo":"forte"},
+    "RbOH":      {"n":1, "nome":"Hidróxido de rubídio",     "cation":"Rb⁺",   "tipo":"forte"},
+    "CsOH":      {"n":1, "nome":"Hidróxido de césio",       "cation":"Cs⁺",   "tipo":"forte"},
+    "NH4OH":     {"n":1, "nome":"Hidróxido de amônio",      "cation":"NH₄⁺",  "tipo":"fraco"},
+    "Ca(OH)2":   {"n":2, "nome":"Hidróxido de cálcio",      "cation":"Ca²⁺",  "tipo":"forte"},
+    "Ba(OH)2":   {"n":2, "nome":"Hidróxido de bário",       "cation":"Ba²⁺",  "tipo":"forte"},
+    "Sr(OH)2":   {"n":2, "nome":"Hidróxido de estrôncio",   "cation":"Sr²⁺",  "tipo":"forte"},
+    "Mg(OH)2":   {"n":2, "nome":"Hidróxido de magnésio",    "cation":"Mg²⁺",  "tipo":"fraco"},
+    "Fe(OH)2":   {"n":2, "nome":"Hidróxido ferroso",        "cation":"Fe²⁺",  "tipo":"fraco"},
+    "Cu(OH)2":   {"n":2, "nome":"Hidróxido cúprico",        "cation":"Cu²⁺",  "tipo":"fraco"},
+    "Zn(OH)2":   {"n":2, "nome":"Hidróxido de zinco",       "cation":"Zn²⁺",  "tipo":"fraco"},
+    "Ni(OH)2":   {"n":2, "nome":"Hidróxido de níquel",      "cation":"Ni²⁺",  "tipo":"fraco"},
+    "Co(OH)2":   {"n":2, "nome":"Hidróxido cobaltoso",      "cation":"Co²⁺",  "tipo":"fraco"},
+    "Mn(OH)2":   {"n":2, "nome":"Hidróxido manganoso",      "cation":"Mn²⁺",  "tipo":"fraco"},
+    "Pb(OH)2":   {"n":2, "nome":"Hidróxido de chumbo II",   "cation":"Pb²⁺",  "tipo":"fraco"},
+    "Al(OH)3":   {"n":3, "nome":"Hidróxido de alumínio",    "cation":"Al³⁺",  "tipo":"fraco"},
+    "Fe(OH)3":   {"n":3, "nome":"Hidróxido férrico",        "cation":"Fe³⁺",  "tipo":"fraco"},
+    "Cr(OH)3":   {"n":3, "nome":"Hidróxido de cromo III",   "cation":"Cr³⁺",  "tipo":"fraco"},
+    "Au(OH)3":   {"n":3, "nome":"Hidróxido áurico",         "cation":"Au³⁺",  "tipo":"fraco"},
+}
+
+def mmc(a, b):
+    from math import gcd
+    return a * b // gcd(a, b)
+
+def neutralizacao():
+    print(titulo("NEUTRALIZAÇÃO ÁCIDO-BASE"))
+    print(f"\n{cor('  ÁCIDOS DISPONÍVEIS:', C.YELLOW)}")
+    acids_list = list(ACIDOS.keys())
+    for i, k in enumerate(acids_list):
+        print(f"  {cor(str(i+1).rjust(2), C.CYAN)}. {k:<12} — {ACIDOS[k]['nome']} ({ACIDOS[k]['tipo']})")
+    print(f"\n{cor('  BASES DISPONÍVEIS:', C.YELLOW)}")
+    bases_list = list(BASES.keys())
+    for i, k in enumerate(bases_list):
+        print(f"  {cor(str(i+1).rjust(2), C.CYAN)}. {k:<14} — {BASES[k]['nome']} ({BASES[k]['tipo']})")
+
+    print()
+    acid_str = input_str("Digite a fórmula do ácido (ex: HCl, H2SO4)")
+    if acid_str not in ACIDOS:
+        print(err(f"Ácido '{acid_str}' não encontrado."))
+        return
+    base_str = input_str("Digite a fórmula da base (ex: NaOH, Ca(OH)2)")
+    if base_str not in BASES:
+        print(err(f"Base '{base_str}' não encontrada."))
+        return
+
+    a = ACIDOS[acid_str]
+    b = BASES[base_str]
+    na, nb = a["n"], b["n"]
+    lc = mmc(na, nb)
+    ca_coef = lc // na
+    cb_coef = lc // nb
+    n_agua = lc
+    cation = b["cation"].replace("⁺","").replace("²","").replace("³","").replace("+","").strip()
+    salt_name = f"{cation} {a['salt']}"
+
+    print()
+    print(cor("  ╔══════════════════════════════════════════════════╗", C.CYAN))
+    print(cor("  ║           EQUAÇÃO BALANCEADA                    ║", C.CYAN))
+    print(cor("  ╚══════════════════════════════════════════════════╝", C.CYAN))
+    prefix_a = str(ca_coef) if ca_coef > 1 else ""
+    prefix_b = str(cb_coef) if cb_coef > 1 else ""
+    prefix_h = str(n_agua) if n_agua > 1 else ""
+    eq = (f"\n  {cor(prefix_a + acid_str, C.GREEN, C.BOLD)}  +  "
+          f"{cor(prefix_b + base_str, C.BLUE, C.BOLD)}  →  "
+          f"{cor(salt_name, C.YELLOW, C.BOLD)}  +  "
+          f"{cor(prefix_h + 'H₂O', C.CYAN)}\n")
+    print(eq)
+    print(info(f"Ácido: {a['nome']} ({a['tipo']}) — {na}-ácido (nox = {na})"))
+    print(info(f"Base:  {b['nome']} ({b['tipo']}) — {nb}-básica (nox = {nb})"))
+    print(info(f"MCM({na},{nb}) = {lc} → coef. ácido = {ca_coef}, coef. base = {cb_coef}, {n_agua} mol H₂O"))
+
+    print(f"\n{cor('  CÁLCULO QUANTITATIVO', C.YELLOW)}")
+    calc_q = input_str("Deseja calcular volumes/concentrações? (s/n)").lower()
+    if calc_q == 's':
+        print(f"\n  {cor('— Dados do ÁCIDO —', C.GREEN)}")
+        va = input_num("Volume do ácido (mL)", allow_empty=True)
+        ca = input_num("Concentração do ácido (mol/L)", allow_empty=True)
+        print(f"  {cor('— Dados da BASE —', C.BLUE)}")
+        vb = input_num("Volume da base (mL)", allow_empty=True)
+        cb = input_num("Concentração da base (mol/L)", allow_empty=True)
+
+        dados = {"va":va,"ca":ca,"vb":vb,"cb":cb}
+        vazios = [k for k,v in dados.items() if v is None]
+
+        if len(vazios) == 0:
+            # Análise completa
+            eq_a = ca * va/1000 * na
+            eq_b = cb * vb/1000 * nb
+            diff = eq_a - eq_b
+            linhas = [
+                f"{cor('nEq(ácido)', C.GRAY)} = {ca} × {va}/1000 × {na} = {cor(f'{eq_a:.4f} eq', C.GREEN)}",
+                f"{cor('nEq(base)', C.GRAY)}  = {cb} × {vb}/1000 × {nb} = {cor(f'{eq_b:.4f} eq', C.GREEN)}",
+                "",
+            ]
+            if abs(diff) < 1e-9:
+                linhas.append(cor("✔ NEUTRALIZAÇÃO COMPLETA — ponto de equivalência", C.GREEN, C.BOLD))
+                linhas.append(cor("  pH ≈ 7,0 (solução neutra)", C.CYAN))
+            elif diff > 0:
+                linhas.append(cor(f"⚠ EXCESSO DE ÁCIDO: {diff:.4f} eq", C.RED))
+                linhas.append(cor("  pH < 7,0 (solução ácida)", C.RED))
+            else:
+                linhas.append(cor(f"⚠ EXCESSO DE BASE: {abs(diff):.4f} eq", C.YELLOW))
+                linhas.append(cor("  pH > 7,0 (solução básica)", C.YELLOW))
+            resultado_box("ANÁLISE DE NEUTRALIZAÇÃO", linhas)
+        elif len(vazios) == 1:
+            k = vazios[0]
+            try:
+                if k == "va":
+                    res = (cb * vb/1000 * nb) / (ca * na) * 1000
+                    print(result(f"Volume do ácido", f"{res:.4f}", "mL"))
+                elif k == "ca":
+                    res = (cb * vb/1000 * nb) / (va/1000 * na)
+                    print(result(f"Concentração do ácido", f"{res:.6f}", "mol/L"))
+                elif k == "vb":
+                    res = (ca * va/1000 * na) / (cb * nb) * 1000
+                    print(result(f"Volume da base", f"{res:.4f}", "mL"))
+                elif k == "cb":
+                    res = (ca * va/1000 * na) / (vb/1000 * nb)
+                    print(result(f"Concentração da base", f"{res:.6f}", "mol/L"))
+            except ZeroDivisionError:
+                print(err("Divisão por zero. Verifique os valores."))
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CONCENTRAÇÃO
+# ─────────────────────────────────────────────────────────────────────────────
+def concentracao():
+    print(titulo("CONCENTRAÇÃO DE SOLUÇÕES"))
+    print("""
+  1. Concentração Comum        C = m / V
+  2. Concentração Molar        M = n / V  =  m / (MM × V)
+  3. Diluição                  C₁V₁ = C₂V₂
+  4. Título em Massa           τ = m_soluto / m_solução
+  5. Fração Molar              X = n_soluto / n_total
+  6. Mistura de Soluções       C_f = (C₁V₁ + C₂V₂)/(V₁+V₂)
+  7. Molalidade                m = n_soluto / m_solvente(kg)
+  8. Voltar
+    """.format(b=C.CYAN+C.BOLD, r=C.RESET))
+    op = input_str("Escolha")
+    if op == "1":
+        print(subtitulo("Concentração Comum  C = m / V  [g/L]"))
+        m = input_num("Massa do soluto (g) — deixe em branco para calcular", allow_empty=True)
+        V = input_num("Volume da solução (L) — deixe em branco para calcular", allow_empty=True)
+        C_ = input_num("Concentração C (g/L) — deixe em branco para calcular", allow_empty=True)
+        vazios = [x for x in [m,V,C_] if x is None]
+        if len(vazios) != 1:
+            print(err("Deixe exatamente 1 campo em branco.")); return
+        if m is None:   print(result("Massa soluto", f"{V*C_:.4f}", "g"),  info(f"m = V × C = {V} × {C_}"))
+        elif V is None: print(result("Volume solução", f"{m/C_:.4f}", "L"), info(f"V = m / C = {m} / {C_}"))
+        else:           print(result("Concentração", f"{m/V:.4f}", "g/L"), info(f"C = m / V = {m} / {V}"))
+
+    elif op == "2":
+        print(subtitulo("Concentração Molar  M = n / V = m / (MM × V)"))
+        m = input_num("Massa do soluto (g) — vazio para calcular", allow_empty=True)
+        MM = input_num("Massa Molar MM (g/mol) — vazio para calcular", allow_empty=True)
+        V = input_num("Volume da solução (L) — vazio para calcular", allow_empty=True)
+        M_ = input_num("Molaridade M (mol/L) — vazio para calcular", allow_empty=True)
+        if m is not None and MM is not None and V is not None:
+            n = m / MM
+            M_calc = n / V
+            resultado_box("CONCENTRAÇÃO MOLAR", [
+                f"n = {m}/{MM} = {cor(f'{n:.4f}', C.GREEN)} mol",
+                f"M = {n:.4f}/{V} = {cor(f'{M_calc:.6f} mol/L', C.GREEN, C.BOLD)}",
+            ])
+        elif M_ is not None and MM is not None and V is not None and m is None:
+            massa = M_ * MM * V
+            print(result("Massa do soluto", f"{massa:.4f}", "g"))
+        elif M_ is not None and m is not None and MM is not None and V is None:
+            Vcalc = m / (MM * M_)
+            print(result("Volume da solução", f"{Vcalc:.4f}", "L"))
+        else:
+            print(err("Combinação inválida."))
+
+    elif op == "3":
+        print(subtitulo("Diluição  C₁V₁ = C₂V₂"))
+        print(info("Deixe 1 campo em branco para calcular."))
+        C1 = input_num("C₁ — vazio para calcular", allow_empty=True)
+        V1 = input_num("V₁ — vazio para calcular", allow_empty=True)
+        C2 = input_num("C₂ — vazio para calcular", allow_empty=True)
+        V2 = input_num("V₂ — vazio para calcular", allow_empty=True)
+        try:
+            if C1 is None:  print(result("C₁", f"{C2*V2/V1:.6f}"))
+            elif V1 is None: print(result("V₁", f"{C2*V2/C1:.4f}"))
+            elif C2 is None: print(result("C₂", f"{C1*V1/V2:.6f}"))
+            elif V2 is None: print(result("V₂", f"{C1*V1/C2:.4f}"))
+        except: print(err("Erro de cálculo."))
+
+    elif op == "4":
+        print(subtitulo("Título em Massa τ = m_soluto / m_solução"))
+        ms = input_num("Massa do soluto (g)")
+        mv = input_num("Massa do solvente (g)")
+        msol = ms + mv
+        tau = ms / msol
+        resultado_box("TÍTULO EM MASSA", [
+            f"Massa solução = {ms} + {mv} = {cor(str(msol), C.GREEN)} g",
+            f"τ = {ms}/{msol} = {cor(f'{tau:.6f}', C.GREEN, C.BOLD)}",
+            f"τ% = {cor(f'{tau*100:.4f}%', C.YELLOW)}",
+        ])
+
+    elif op == "5":
+        print(subtitulo("Fração Molar X = n_soluto / (n_soluto + n_solvente)"))
+        ms = input_num("Massa do soluto (g)")
+        MMs = input_num("Massa Molar do soluto (g/mol)")
+        mv = input_num("Massa do solvente (g)")
+        MMv = input_num("Massa Molar do solvente (g/mol)", default=18.015)
+        ns = ms / MMs
+        nv = mv / MMv
+        Xs = ns / (ns + nv)
+        Xv = nv / (ns + nv)
+        resultado_box("FRAÇÕES MOLARES", [
+            f"n_soluto   = {ms}/{MMs} = {cor(f'{ns:.4f}', C.GREEN)} mol",
+            f"n_solvente = {mv}/{MMv} = {cor(f'{nv:.4f}', C.GREEN)} mol",
+            f"X_soluto   = {cor(f'{Xs:.6f}', C.GREEN, C.BOLD)}",
+            f"X_solvente = {cor(f'{Xv:.6f}', C.CYAN)}",
+        ])
+
+    elif op == "6":
+        print(subtitulo("Mistura de Soluções  C_f = (C₁V₁ + C₂V₂)/(V₁+V₂)"))
+        C1 = input_num("C₁ (mol/L ou g/L)")
+        V1 = input_num("V₁ (L)")
+        C2 = input_num("C₂")
+        V2 = input_num("V₂ (L)")
+        Cf = (C1*V1 + C2*V2) / (V1+V2)
+        resultado_box("CONCENTRAÇÃO FINAL", [
+            f"C_f = ({C1}×{V1} + {C2}×{V2}) / ({V1}+{V2})",
+            f"C_f = {cor(f'{Cf:.6f}', C.GREEN, C.BOLD)} (mesma unidade de entrada)",
+        ])
+
+    elif op == "7":
+        print(subtitulo("Molalidade  m = n_soluto / m_solvente(kg)"))
+        ns = input_num("Moles do soluto (mol) — ou massa/MM", allow_empty=True)
+        massa_s = input_num("Massa do soluto (g) — vazio se já deu moles", allow_empty=True)
+        MM_ = input_num("Massa Molar do soluto (g/mol) — vazio se já deu moles", allow_empty=True)
+        mv_kg = input_num("Massa do solvente (kg)")
+        if ns is None and massa_s is not None and MM_ is not None:
+            ns = massa_s / MM_
+        molal = ns / mv_kg
+        print(result("Molalidade", f"{molal:.4f}", "mol/kg"))
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SOLUBILIDADE
+# ─────────────────────────────────────────────────────────────────────────────
+SOLUBILIDADES = {
+    "NaCl":       {"cs":36.0,   "temp":20, "obs":"Aumenta ligeiramente com T"},
+    "KNO3":       {"cs":31.6,   "temp":20, "obs":"Muito sensível a T (CS=246 a 100°C)"},
+    "KCl":        {"cs":34.0,   "temp":20, "obs":"Aumenta com T"},
+    "KBr":        {"cs":65.2,   "temp":20, "obs":"Aumenta com T"},
+    "KI":         {"cs":144.0,  "temp":20, "obs":"Aumenta com T"},
+    "CuSO4·5H2O": {"cs":20.7,   "temp":20, "obs":"Aumenta com T; anidro a 200°C"},
+    "Ca(OH)2":    {"cs":0.165,  "temp":20, "obs":"Diminui com T (solubilidade retrógrada)"},
+    "NaHCO3":     {"cs":9.6,    "temp":20, "obs":"Aumenta com T"},
+    "Na2CO3":     {"cs":21.4,   "temp":20, "obs":"Máximo a 32,8°C"},
+    "MgSO4":      {"cs":33.7,   "temp":20, "obs":"Aumenta com T"},
+    "AgNO3":      {"cs":222.0,  "temp":20, "obs":"Muito solúvel; aumenta muito com T"},
+    "BaSO4":      {"cs":0.00025,"temp":25, "obs":"Praticamente insolúvel"},
+    "AgCl":       {"cs":0.00019,"temp":25, "obs":"Praticamente insolúvel — precipita"},
+    "CaCO3":      {"cs":0.0013, "temp":25, "obs":"Praticamente insolúvel"},
+    "Sacarose":   {"cs":203.9,  "temp":20, "obs":"Muito solúvel; aumenta muito com T"},
+    "Glicose":    {"cs":91.0,   "temp":25, "obs":"Solúvel; aumenta com T"},
+    "Al2(SO4)3":  {"cs":31.2,   "temp":20, "obs":"Aumenta com T"},
+    "FeSO4":      {"cs":26.3,   "temp":20, "obs":"Aumenta com T"},
+    "Pb(NO3)2":   {"cs":56.0,   "temp":20, "obs":"Aumenta com T"},
+    "SrSO4":      {"cs":0.0113, "temp":25, "obs":"Praticamente insolúvel"},
+    "I2":         {"cs":0.30,   "temp":25, "obs":"Pouco solúvel em água; muito solúvel em KI(aq)"},
+    "NH4Cl":      {"cs":37.7,   "temp":20, "obs":"Aumenta com T"},
+    "LiCl":       {"cs":83.5,   "temp":20, "obs":"Muito solúvel"},
+    "ZnSO4":      {"cs":54.4,   "temp":20, "obs":"Aumenta com T"},
+    "CaCl2":      {"cs":74.5,   "temp":20, "obs":"Muito solúvel; exotérmica ao dissolver"},
+}
+
+def solubilidade():
+    print(titulo("SOLUBILIDADE"))
+    print("  1. Calcular Coeficiente de Solubilidade")
+    print("  2. Classificar tipo de solução (sat/insat/supersat)")
+    print("  3. Tabela de solubilidades comuns")
+    print("  4. Produto de solubilidade (Kps)")
+    print("  5. Voltar")    
+    op = input_str("Escolha")
+    if op == "1":
+        print(subtitulo("Coeficiente de Solubilidade  CS = (m_soluto/m_solvente) × 100"))
+        ms = input_num("Massa de soluto dissolvida (g)")
+        mv = input_num("Massa de solvente (g)", default=100)
+        cs = (ms / mv) * 100
+        resultado_box("COEFICIENTE DE SOLUBILIDADE", [
+            f"CS = ({ms}/{mv}) × 100",
+            f"CS = {cor(f'{cs:.4f} g / 100g solvente', C.GREEN, C.BOLD)}",
+        ])
+    elif op == "2":
+        print(subtitulo("Tipo de Solução"))
+        dis = input_num("Massa de soluto que você dissolveu (g/100g solvente)")
+        cs  = input_num("Coeficiente de solubilidade CS da substância (g/100g solvente)")
+        if dis < cs:
+            print(ok(f"Solução INSATURADA — pode dissolver mais {cs-dis:.4f} g"))
+        elif abs(dis - cs) < 1e-9:
+            print(warn("Solução SATURADA — no limite exato de solubilidade"))
+        else:
+            print(err(f"Solução SUPERSATURADA — {dis-cs:.4f} g em excesso; instável, cristaliza ao agitar"))
+
+    elif op == "3":
+        print(subtitulo("Solubilidades Comuns (g/100g H₂O)"))
+        print(cor(f"{'Substância':<18}", C.YELLOW), cor(f"{'CS':>10}", C.YELLOW), cor(f"{'T':>5}", C.YELLOW), cor("Observação", C.YELLOW))
+        separador()
+        for k, v in SOLUBILIDADES.items():
+            print(f"  {cor(k, C.CYAN):<26} {cor(str(v['cs']).rjust(8), C.GREEN)}  {str(v['temp']+'°C').rjust(5) if isinstance(v['temp'],str) else str(v['temp'])+'°C':>5}  {cor(v['obs'], C.GRAY)}")
+
+    elif op == "4":
+        print(subtitulo("Produto de Solubilidade  Kps = [cátion]^a × [ânion]^b"))
+        print(info("Kps comuns: BaSO4=1,1e-10 | AgCl=1,8e-10 | CaCO3=3,3e-9 | PbS=9,0e-29"))
+        kps = input_num("Valor de Kps (ex: 1.8e-10)")
+        a   = input_num("Coeficiente estequiométrico do cátion (a)", default=1)
+        b_  = input_num("Coeficiente estequiométrico do ânion (b)", default=1)
+        # AxBy → a[A^(b+)] + b[B^(a-)]
+        # Kps = (a·s)^a · (b·s)^b = a^a · b^b · s^(a+b)
+        n = a + b_
+        s = (kps / (a**a * b_**b_)) ** (1/n)
+        resultado_box("SOLUBILIDADE MOLAR", [
+            f"Kps = {kps:.4e}",
+            f"s^{int(n)} = Kps / ({int(a)}^{int(a)} × {int(b_)}^{int(b_)})",
+            f"s  = {cor(f'{s:.6e} mol/L', C.GREEN, C.BOLD)}",
+        ])
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ESTEQUIOMETRIA
+# ─────────────────────────────────────────────────────────────────────────────
+def estequiometria():
+    print(titulo("ESTEQUIOMETRIA"))
+    print("  1. Cálculo Estequiométrico")
+    print("  2. Reagente Limitante e Reagente em Excesso")
+    print("  3. Rendimento Percentual")
+    print("  4. Mol, Massa, Volume (CNTP) e Partículas")
+    print("  5. Fórmula Mínima e Percentagem em Massa")
+    print("  6. Voltar")
+    op = input_str("Escolha")
+    NA = 6.022e23
+
+    if op == "1":
+        print(subtitulo("Cálculo Estequiométrico"))
+        print(info("Fórmula: Reagente A → Produto B"))
+        ca = input_num("Coeficiente de A (reagente)", default=1)
+        cb = input_num("Coeficiente de B (produto)", default=1)
+        mma = input_num("Massa Molar de A (g/mol)")
+        mmb = input_num("Massa Molar de B (g/mol)")
+        ma = input_num("Massa de A fornecida (g)")
+        rend = input_num("Rendimento % (padrão=100)", default=100)
+        n_a = ma / mma
+        n_b_teo = n_a * cb / ca
+        m_b_teo = n_b_teo * mmb
+        m_b_real = m_b_teo * rend / 100
+        v_cntp = n_b_teo * 22.4
+        n_part = n_b_teo * NA
+        resultado_box("CÁLCULO ESTEQUIOMÉTRICO", [
+            f"n(A) = {ma}/{mma} = {cor(f'{n_a:.4f}', C.CYAN)} mol",
+            f"n(B) = {n_a:.4f} × {cb}/{ca} = {cor(f'{n_b_teo:.4f}', C.CYAN)} mol",
+            f"m(B) teórico = {cor(f'{m_b_teo:.4f} g', C.GREEN, C.BOLD)}",
+            f"m(B) real ({rend}%) = {cor(f'{m_b_real:.4f} g', C.YELLOW, C.BOLD)}",
+            f"V(B) no CNTP = {cor(f'{v_cntp:.4f} L', C.GREEN)}",
+            f"N(B) partículas = {cor(f'{n_part:.3e}', C.MAGENTA)}",
+        ])
+
+    elif op == "2":
+        print(subtitulo("Reagente Limitante"))
+        ca = input_num("Coef. reagente 1")
+        m1 = input_num("Massa reagente 1 (g)")
+        mm1 = input_num("MM reagente 1 (g/mol)")
+        cb = input_num("Coef. reagente 2")
+        m2 = input_num("Massa reagente 2 (g)")
+        mm2 = input_num("MM reagente 2 (g/mol)")
+        r1 = (m1/mm1)/ca
+        r2 = (m2/mm2)/cb
+        lim = "Reagente 1" if r1 < r2 else "Reagente 2"
+        exc = "Reagente 2" if r1 < r2 else "Reagente 1"
+        r_lim = min(r1,r2)
+        r_exc = max(r1,r2)
+        excesso_mol = (r_exc - r_lim) * (cb if lim=="Reagente 1" else ca)
+        excesso_g = excesso_mol * (mm2 if lim=="Reagente 1" else mm1)
+        resultado_box("REAGENTE LIMITANTE", [
+            f"Razão A = {m1/mm1:.4f}/{ca} = {cor(f'{r1:.4f}', C.CYAN)}",
+            f"Razão B = {m2/mm2:.4f}/{cb} = {cor(f'{r2:.4f}', C.CYAN)}",
+            f"Reagente Limitante = {cor(lim, C.RED, C.BOLD)}",
+            f"Reagente em Excesso = {cor(exc, C.YELLOW)}",
+            f"Excesso = {cor(f'{excesso_g:.4f} g', C.GRAY)} do reagente em excesso sobra",
+        ])
+
+    elif op == "3":
+        print(subtitulo("Rendimento Percentual"))
+        m_real = input_num("Quantidade real obtida (g ou mol)")
+        m_teo  = input_num("Quantidade teórica esperada (g ou mol)")
+        rend   = m_real / m_teo * 100
+        resultado_box("RENDIMENTO", [
+            f"% rend = ({m_real}/{m_teo}) × 100",
+            f"% rend = {cor(f'{rend:.2f}%', C.GREEN, C.BOLD)}",
+        ])
+
+    elif op == "4":
+        print(subtitulo("Mol ↔ Massa ↔ Volume ↔ Partículas"))
+        print(
+  {cor('a)', C.CYAN)}," mol → massa (n × MM)",
+  {cor('b)', C.CYAN)}," mol → volume CNTP (n × 22,4)",
+  {cor('c)', C.CYAN)}," mol → partículas (n × 6,022×10²³)",
+  {cor('d)', C.CYAN)} ,"massa → mol (m / MM)"
+        )
+        mm = input_num("Massa Molar MM (g/mol)")
+        n_  = input_num("Número de moles (n)")
+        resultado_box("CONVERSÕES", [
+            f"Massa      = n × MM = {n_:.4f} × {mm} = {cor(f'{n_*mm:.4f} g', C.GREEN, C.BOLD)}",
+            f"Vol. CNTP  = n × 22,4 = {cor(f'{n_*22.4:.4f} L', C.GREEN)}",
+            f"Partículas = n × Nₐ = {cor(f'{n_*NA:.4e}', C.MAGENTA)}",
+        ])
+
+    elif op == "5":
+        print(subtitulo("Fórmula Mínima — Composição Percentual"))
+        print(info("Digite as % em massa dos elementos (somam 100%)"))
+        elementos_comp = []
+        while True:
+            sym = input_str("Símbolo do elemento (ENTER para finalizar)")
+            if not sym: break
+            el = buscar_elemento(sym)
+            if el is None:
+                print(err("Elemento não encontrado.")); continue
+            pct = input_num(f"% em massa de {el['nome']}")
+            elementos_comp.append((el['nome'], el['massa'], pct))
+
+        if elementos_comp:
+            print()
+            ratios = [(nome, pct/mm) for nome, mm, pct in elementos_comp]
+            min_r  = min(r for _,r in ratios)
+            norm   = [(nome, r/min_r) for nome, r in ratios]
+            # Arredondar para inteiro mais próximo
+            import fractions
+            print(cor("  Fórmula mínima:", C.YELLOW))
+            formula = ""
+            for nome, coef in norm:
+                f_ = fractions.Fraction(coef).limit_denominator(12)
+                print(f"    {nome}: {coef:.3f} ≈ {f_}")
+                formula += f"{nome.split()[0]}{int(round(coef)) if round(coef)>1 else ''}"
+            print(result("Fórmula mínima aproximada", formula))
+
+# ─────────────────────────────────────────────────────────────────────────────
+# GASES
+# ─────────────────────────────────────────────────────────────────────────────
+def gases():
+    print(titulo("GASES"))
+    print("  1. Lei Geral dos Gases      P₁V₁/T₁ = P₂V₂/T₂")
+    print("  2. Gás Ideal (Clapeyron)    PV = nRT")
+    print("  3. Lei de Boyle              P₁V₁ = P₂V₂  (T=cte)")
+    print("  4. Lei de Charles            V₁/T₁ = V₂/T₂ (P=cte)")
+    print("  5. Lei de Gay-Lussac         P₁/T₁ = P₂/T₂ (V=cte)")
+    print("  6. Lei de Dalton             P_total = ΣPᵢ")
+    print("  7. Velocidade RMS            v_rms = √(3RT/M)")
+    print("  8. Difusão de Graham         v₁/v₂ = √(M₂/M₁)")
+    print("  9. Voltar")    
+    R = 0.082  # atm·L/mol·K
+    R_J = 8.314  # J/mol·K
+    op = input_str("Escolha")
+
+    if op == "1":
+        print(subtitulo("Lei Geral P₁V₁/T₁ = P₂V₂/T₂ — deixe 1 campo vazio"))
+        print(info("T em Kelvin: T(K) = T(°C) + 273"))
+        P1=input_num("P₁ (atm)",allow_empty=True); V1=input_num("V₁ (L)",allow_empty=True); T1=input_num("T₁ (K)",allow_empty=True)
+        P2=input_num("P₂ (atm)",allow_empty=True); V2=input_num("V₂ (L)",allow_empty=True); T2=input_num("T₂ (K)",allow_empty=True)
+        vals = {"P₁":P1,"V₁":V1,"T₁":T1,"P₂":P2,"V₂":V2,"T₂":T2}
+        vazios = [k for k,v in vals.items() if v is None]
+        if len(vazios) != 1:
+            print(err("Deixe exatamente 1 campo vazio.")); return
+        k = vazios[0]
+        try:
+            if k=="P₁":   res=P2*V2*T1/(T2*V1)
+            elif k=="V₁": res=P2*V2*T1/(T2*P1)
+            elif k=="T₁": res=P1*V1*T2/(P2*V2)
+            elif k=="P₂": res=P1*V1*T2/(T1*V2)
+            elif k=="V₂": res=P1*V1*T2/(T1*P2)
+            else:          res=P2*V2*T1/(P1*V1)
+            print(result(k, f"{res:.4f}"))
+        except: print(err("Erro de cálculo."))
+
+    elif op == "2":
+        print(subtitulo("Equação de Clapeyron  PV = nRT  (R = 0,082 atm·L/mol·K)"))
+        P=input_num("P (atm) — vazio para calcular",allow_empty=True)
+        V=input_num("V (L) — vazio para calcular",allow_empty=True)
+        n=input_num("n (mol) — vazio para calcular",allow_empty=True)
+        T=input_num("T (K) — vazio para calcular",allow_empty=True)
+        try:
+            if P is None:  res=n*R*T/V; print(result("P",f"{res:.4f}","atm"))
+            elif V is None:res=n*R*T/P; print(result("V",f"{res:.4f}","L"))
+            elif n is None:res=P*V/(R*T);print(result("n",f"{res:.4f}","mol"))
+            elif T is None:res=P*V/(n*R);print(result("T",f"{res:.4f}","K"),info(f"{res-273.15:.2f} °C"))
+        except: print(err("Erro de cálculo."))
+
+    elif op == "3":
+        print(subtitulo("Lei de Boyle  P₁V₁ = P₂V₂ (T constante)"))
+        P1=input_num("P₁ — vazio para calcular",allow_empty=True); V1=input_num("V₁",allow_empty=True if P1 else False)
+        P2=input_num("P₂ — vazio para calcular",allow_empty=True); V2=input_num("V₂",allow_empty=True if P2 else False)
+        try:
+            if P1 is None: res=P2*V2/V1; print(result("P₁",f"{res:.4f}"))
+            elif V1 is None:res=P2*V2/P1;print(result("V₁",f"{res:.4f}"))
+            elif P2 is None:res=P1*V1/V2;print(result("P₂",f"{res:.4f}"))
+            else:           res=P1*V1/P2;print(result("V₂",f"{res:.4f}"))
+        except: print(err("Erro."))
+
+    elif op == "4":
+        print(subtitulo("Lei de Charles  V₁/T₁ = V₂/T₂ (P constante)"))
+        V1=input_num("V₁",allow_empty=True); T1=input_num("T₁ (K)",allow_empty=True)
+        V2=input_num("V₂",allow_empty=True); T2=input_num("T₂ (K)",allow_empty=True)
+        vazios=[k for k,v in{"V₁":V1,"T₁":T1,"V₂":V2,"T₂":T2}.items() if v is None]
+        if len(vazios)!=1: print(err("Deixe 1 vazio.")); return
+        k=vazios[0]
+        if k=="V₁":  res=V2*T1/T2
+        elif k=="T₁":res=V1*T2/V2
+        elif k=="V₂":res=V1*T2/T1
+        else:         res=V2*T1/V1
+        print(result(k,f"{res:.4f}"))
+
+    elif op == "5":
+        print(subtitulo("Lei de Gay-Lussac  P₁/T₁ = P₂/T₂ (V constante)"))
+        P1=input_num("P₁",allow_empty=True); T1=input_num("T₁ (K)",allow_empty=True)
+        P2=input_num("P₂",allow_empty=True); T2=input_num("T₂ (K)",allow_empty=True)
+        vazios=[k for k,v in{"P₁":P1,"T₁":T1,"P₂":P2,"T₂":T2}.items() if v is None]
+        if len(vazios)!=1: print(err("Deixe 1 vazio.")); return
+        k=vazios[0]
+        if k=="P₁":  res=P2*T1/T2
+        elif k=="T₁":res=P1*T2/P2
+        elif k=="P₂":res=P1*T2/T1
+        else:         res=P2*T1/P1
+        print(result(k,f"{res:.4f}"))
+
+    elif op == "6":
+        print(subtitulo("Lei de Dalton  P_total = ΣPᵢ"))
+        Ptot = input_num("Pressão total (atm)")
+        n_ = int(input_num("Quantos gases?", default=3))
+        moles = []
+        for i in range(n_):
+            moles.append(input_num(f"n_{i+1} (mol)"))
+        total_mol = sum(moles)
+        print()
+        for i, n_i in enumerate(moles):
+            Xi = n_i / total_mol
+            Pi = Xi * Ptot
+            print(f"  Gás {i+1}: X = {Xi:.4f}  →  P_{i+1} = {cor(f'{Pi:.4f} atm', C.GREEN)}")
+
+    elif op == "7":
+        print(subtitulo("Velocidade Quadrática Média  v_rms = √(3RT/M)"))
+        T = input_num("Temperatura T (K)")
+        M = input_num("Massa Molar M (kg/mol) — ex: H2 = 0.002")
+        v = math.sqrt(3 * R_J * T / M)
+        print(result("v_rms", f"{v:.2f}", "m/s"))
+
+    elif op == "8":
+        print(subtitulo("Lei de Graham  v₁/v₂ = √(M₂/M₁)"))
+        M1 = input_num("M₁ (g/mol)")
+        M2 = input_num("M₂ (g/mol)")
+        razao = math.sqrt(M2 / M1)
+        print(result("v₁/v₂", f"{razao:.4f}"), info(f"Gás 1 difunde {razao:.2f}x mais {'rápido' if razao>1 else 'lento'} que gás 2"))
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TERMOQUÍMICA
+# ─────────────────────────────────────────────────────────────────────────────
+def termoquimica():
+    print(titulo("TERMOQUÍMICA"))
+    print("  1. Calorimetria            Q = m × c × ΔT")
+    print("  2. Q = n × ΔH")
+    print("  3. Lei de Hess             ΔH = ΣΔHf°(prod) - ΣΔHf°(reag)")
+    print("  4. Energia de Ligação      ΔH = Σ E(quebradas) - Σ E(formadas)")
+    print("  5. ΔG de Gibbs             ΔG = ΔH - TΔS")
+    print("  6. Equilíbrio Térmico      m₁c₁ΔT₁ = m₂c₂ΔT₂")
+    print("  7. Calores Específicos Comuns")
+    print("  8. Voltar")
+    op = input_str("Escolha")
+
+    if op == "1":
+        print(subtitulo("Q = m × c × ΔT"))
+        print(info("Calores específicos: água=4,18 | ferro=0,449 | cobre=0,385 | alumínio=0,900"))
+        m = input_num("Massa (g)")
+        c = input_num("Calor específico c (J/g·°C)", default=4.18)
+        Ti = input_num("Temperatura inicial Ti (°C)")
+        Tf = input_num("Temperatura final Tf (°C)")
+        dT = Tf - Ti
+        Q = m * c * dT
+        resultado_box("CALOR TROCADO", [
+            f"ΔT = {Tf} - {Ti} = {cor(f'{dT:.2f} °C', C.CYAN)}",
+            f"Q = {m} × {c} × {dT:.2f}",
+            f"Q = {cor(f'{Q:.2f} J', C.GREEN, C.BOLD)}  =  {cor(f'{Q/1000:.4f} kJ', C.YELLOW)}  =  {cor(f'{Q/4.184:.2f} cal', C.BLUE)}",
+            f"{'Reação ENDOTÉRMICA (Q > 0 — absorve calor)' if Q > 0 else 'Reação EXOTÉRMICA (Q < 0 — libera calor)'}",
+        ])
+
+    elif op == "2":
+        print(subtitulo("Q = n × ΔH"))
+        n_ = input_num("Número de moles (n)")
+        dH = input_num("Entalpia ΔH (kJ/mol) — negativo se exotérmica")
+        Q = n_ * dH
+        print(result("Q", f"{Q:.4f}", "kJ"), info(f"Q = {n_} × {dH} = {Q:.4f} kJ"))
+
+    elif op == "3":
+        print(subtitulo("Lei de Hess  ΔHrxn = ΣΔHf°(produtos) - ΣΔHf°(reagentes)"))
+        print(info("Insira os valores de ΔHf° e coeficientes separados por vírgula"))
+        try:
+            prod_dh = [float(x) for x in input_str("ΔHf° dos PRODUTOS (kJ/mol), ex: -393.5,-241.8").split(",")]
+            prod_c  = [float(x) for x in input_str("Coeficientes dos PRODUTOS, ex: 1,2").split(",")]
+            reag_dh = [float(x) for x in input_str("ΔHf° dos REAGENTES (kJ/mol), ex: 0,0").split(",")]
+            reag_c  = [float(x) for x in input_str("Coeficientes dos REAGENTES, ex: 1,2").split(",")]
+            sp = sum(dh*c for dh,c in zip(prod_dh, prod_c))
+            sr = sum(dh*c for dh,c in zip(reag_dh, reag_c))
+            dH = sp - sr
+            resultado_box("LEI DE HESS", [
+                f"ΣΔHf°(produtos)  = {cor(f'{sp:.2f} kJ', C.GREEN)}",
+                f"ΣΔHf°(reagentes) = {cor(f'{sr:.2f} kJ', C.GREEN)}",
+                f"ΔHrxn = {sp:.2f} - {sr:.2f} = {cor(f'{dH:.2f} kJ/mol', C.GREEN, C.BOLD)}",
+                f"{'EXOTÉRMICA (ΔH < 0)' if dH < 0 else 'ENDOTÉRMICA (ΔH > 0)'}",
+            ])
+        except: print(err("Erro de entrada. Separe valores por vírgula sem espaços."))
+
+    elif op == "4":
+        print(subtitulo("Energia de Ligação  ΔH = Σ E(quebradas) - Σ E(formadas)"))
+        print(info("Energias comuns (kJ/mol): H-H=436 | O=O=498 | H-O=463 | C-H=414 | C=O=799 | C-C=347 | C=C=614 | N≡N=945"))
+        try:
+            eq_ = [float(x) for x in input_str("Energias de ligações QUEBRADAS (kJ), ex: 436,498").split(",")]
+            ef_ = [float(x) for x in input_str("Energias de ligações FORMADAS (kJ), ex: 463,463").split(",")]
+            sq = sum(eq_); sf = sum(ef_)
+            dH = sq - sf
+            resultado_box("ENERGIA DE LIGAÇÃO", [
+                f"Σ E(quebradas) = {cor(f'{sq:.2f} kJ', C.GREEN)}",
+                f"Σ E(formadas)  = {cor(f'{sf:.2f} kJ', C.GREEN)}",
+                f"ΔH = {sq:.2f} - {sf:.2f} = {cor(f'{dH:.2f} kJ/mol', C.GREEN, C.BOLD)}",
+            ])
+        except: print(err("Erro de entrada."))
+
+    elif op == "5":
+        print(subtitulo("Energia Livre de Gibbs  ΔG = ΔH - TΔS"))
+        dH = input_num("ΔH (kJ/mol)")
+        T_ = input_num("T (K)")
+        dS = input_num("ΔS (J/mol·K)")
+        dG = dH - T_ * (dS/1000)
+        espontaneo = dG < 0
+        resultado_box("ENERGIA DE GIBBS", [
+            f"ΔG = {dH} - {T_} × {dS}/1000",
+            f"ΔG = {cor(f'{dG:.4f} kJ/mol', C.GREEN if espontaneo else C.RED, C.BOLD)}",
+            f"{'✔ Reação ESPONTÂNEA (ΔG < 0)' if espontaneo else '✘ Reação NÃO-ESPONTÂNEA (ΔG > 0)'}",
+            f"{'(a 100% de conversão seria ΔG=0 no equilíbrio)' if not espontaneo else ''}",
+        ])
+
+    elif op == "6":
+        print(subtitulo("Equilíbrio Térmico  Q_cedido = Q_absorvido"))
+        m1=input_num("m₁ (g)"); c1=input_num("c₁ (J/g·°C)",default=4.18); T1=input_num("T₁ inicial (°C)")
+        m2=input_num("m₂ (g)"); c2=input_num("c₂ (J/g·°C)",default=0.449); T2=input_num("T₂ inicial (°C)")
+        Tf = (m1*c1*T1 + m2*c2*T2) / (m1*c1 + m2*c2)
+        print(result("Temperatura de equilíbrio", f"{Tf:.2f}", "°C"))
+
+    elif op == "7":
+        print(subtitulo("Calores Específicos de Substâncias Comuns (J/g·°C)"))
+        dados = [
+            ("Água (líquida)","4,186"),("Água (vapor)","2,010"),("Gelo","2,090"),
+            ("Ferro","0,449"),("Cobre","0,385"),("Alumínio","0,900"),("Ouro","0,129"),
+            ("Chumbo","0,128"),("Prata","0,235"),("Zinco","0,388"),("Sódio","1,228"),
+            ("Titânio","0,523"),("Concreto","0,880"),("Vidro","0,840"),("Areia","0,840"),
+            ("Madeira","1,700"),("Etanol","2,440"),("Glicerol","2,420"),("Benceno","1,730"),
+        ]
+        separador()
+        for nome, c_ in dados:
+            print(f"  {cor(nome, C.CYAN):<30} {cor(c_, C.GREEN)} J/g·°C")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ELETROQUÍMICA
+# ─────────────────────────────────────────────────────────────────────────────
+POTENCIAIS = [
+    ("Li⁺ + e⁻ → Li",            -3.040),
+    ("K⁺ + e⁻ → K",              -2.931),
+    ("Ba²⁺ + 2e⁻ → Ba",          -2.912),
+    ("Ca²⁺ + 2e⁻ → Ca",          -2.868),
+    ("Na⁺ + e⁻ → Na",            -2.710),
+    ("Mg²⁺ + 2e⁻ → Mg",          -2.372),
+    ("Al³⁺ + 3e⁻ → Al",          -1.662),
+    ("Mn²⁺ + 2e⁻ → Mn",          -1.185),
+    ("2H₂O + 2e⁻ → H₂ + 2OH⁻",  -0.828),
+    ("Zn²⁺ + 2e⁻ → Zn",          -0.762),
+    ("Cr³⁺ + 3e⁻ → Cr",          -0.744),
+    ("Fe²⁺ + 2e⁻ → Fe",          -0.447),
+    ("Cd²⁺ + 2e⁻ → Cd",          -0.402),
+    ("Ni²⁺ + 2e⁻ → Ni",          -0.257),
+    ("Pb²⁺ + 2e⁻ → Pb",          -0.126),
+    ("2H⁺ + 2e⁻ → H₂",           0.000),
+    ("S + 2H⁺ + 2e⁻ → H₂S",      0.142),
+    ("Sn⁴⁺ + 2e⁻ → Sn²⁺",        0.151),
+    ("Cu²⁺ + 2e⁻ → Cu",          0.342),
+    ("I₂ + 2e⁻ → 2I⁻",           0.536),
+    ("Fe³⁺ + e⁻ → Fe²⁺",         0.771),
+    ("Ag⁺ + e⁻ → Ag",            0.800),
+    ("Hg²⁺ + 2e⁻ → Hg",          0.851),
+    ("NO₃⁻ + 4H⁺ + 3e⁻ → NO",   0.957),
+    ("Br₂ + 2e⁻ → 2Br⁻",         1.065),
+    ("O₂ + 4H⁺ + 4e⁻ → 2H₂O",   1.229),
+    ("Cr₂O₇²⁻ + 14H⁺ + 6e⁻ → 2Cr³⁺", 1.360),
+    ("Cl₂ + 2e⁻ → 2Cl⁻",         1.358),
+    ("MnO₄⁻ + 8H⁺ + 5e⁻ → Mn²⁺", 1.491),
+    ("Au³⁺ + 3e⁻ → Au",          1.498),
+    ("PbO₂ + 4H⁺ + 2e⁻ → Pb²⁺", 1.455),
+    ("Ce⁴⁺ + e⁻ → Ce³⁺",         1.610),
+    ("H₂O₂ + 2H⁺ + 2e⁻ → 2H₂O", 1.776),
+    ("F₂ + 2e⁻ → 2F⁻",           2.866),
+]
+
+def eletroquimica():
+    print(titulo("ELETROQUÍMICA"))
+    print("  1. Potencial de Pilha           E°pilha = E°cátodo - E°ânodo")
+    print("  2. ΔG e Constante de Equilíbrio ΔG = -nFE°")
+    print("  3. Lei de Faraday               m = (MM × i × t) / (n × F)")
+    print("  4. Tabela de Potenciais Padrão")
+    print("  5. Equação de Nernst            E = E° - (RT/nF)lnQ")
+    print("  6. Voltar")
+    F_ = 96485  # C/mol
+    R_  = 8.314
+    op = input_str("Escolha")
+
+    if op == "1":
+        print(subtitulo("E°pilha = E°cátodo(redução) - E°ânodo(redução)"))
+        E_cat = input_num("E° do cátodo (semirreação de REDUÇÃO) em V")
+        E_ano = input_num("E° do ânodo (semirreação de REDUÇÃO) em V")
+        E_pilha = E_cat - E_ano
+        espontaneo = E_pilha > 0
+        resultado_box("POTENCIAL DE PILHA", [
+            f"E°pilha = {E_cat} - ({E_ano}) = {cor(f'{E_pilha:.3f} V', (C.GREEN if espontaneo else C.RED), C.BOLD)}",
+            f"{'✔ Reação ESPONTÂNEA (E° > 0, ΔG < 0)' if espontaneo else '✘ NÃO ESPONTÂNEA (E° < 0, ΔG > 0)'}",
+            f"{'⚡ Pilha galvânica (corrente espontânea)' if espontaneo else '⚡ Eletrólise necessária'}",
+        ])
+
+    elif op == "2":
+        print(subtitulo("ΔG = -nFE°  |  ln(K) = nFE°/RT"))
+        E = input_num("E° da pilha (V)")
+        n_ = input_num("Número de elétrons transferidos (n)")
+        T_ = input_num("T (K)", default=298.15)
+        dG = -n_ * F_ * E / 1000  # kJ
+        if E != 0:
+            lnK = n_ * F_ * E / (R_ * T_)
+            K = math.exp(lnK)
+        else:
+            lnK = 0; K = 1
+        resultado_box("ΔG E EQUILÍBRIO", [
+            f"ΔG° = -nFE° = -{n_} × 96485 × {E} / 1000",
+            f"ΔG° = {cor(f'{dG:.2f} kJ/mol', C.GREEN, C.BOLD)}",
+            f"lnK = nFE°/(RT) = {lnK:.4f}",
+            f"K   = {cor(f'{K:.4e}', C.CYAN)}",
+        ])
+
+    elif op == "3":
+        print(subtitulo("Lei de Faraday  m = (MM × i × t) / (n × F)"))
+        print(info("F = 96485 C/mol  |  Carga Q = i × t"))
+        MM_ = input_num("Massa Molar do elemento (g/mol)")
+        i_  = input_num("Corrente elétrica i (A)")
+        t_  = input_num("Tempo t (s)")
+        n_  = input_num("Número de elétrons n", default=1)
+        m   = (MM_ * i_ * t_) / (n_ * F_)
+        Q_  = i_ * t_
+        resultado_box("LEI DE FARADAY", [
+            f"Q = {i_} × {t_} = {cor(f'{Q_:.2f} C', C.CYAN)}",
+            f"m = ({MM_} × {i_} × {t_}) / ({n_} × 96485)",
+            f"m = {cor(f'{m:.4f} g', C.GREEN, C.BOLD)}",
+            f"n(depositado) = {cor(f'{m/MM_:.4f} mol', C.YELLOW)}",
+        ])
+
+    elif op == "4":
+        print(subtitulo("Tabela de Potenciais de Redução Padrão (25°C)"))
+        separador()
+        print(f"  {cor('Semirreação', C.YELLOW):<55} {cor('E° (V)', C.GREEN)}")
+        separador()
+        for rxn, e in POTENCIAIS:
+            cor_e = C.GREEN if e > 0 else (C.RED if e < 0 else C.GRAY)
+            print(f"  {rxn:<55} {cor(f'{e:+.3f}', cor_e)}")
+
+    elif op == "5":
+        print(subtitulo("Equação de Nernst  E = E° - (0,0257/n) × lnQ  a 25°C"))
+        E0 = input_num("E° da pilha (V)")
+        n_ = input_num("Número de elétrons n")
+        Q_ = input_num("Quociente de reação Q (produtos/reagentes)")
+        T_ = input_num("T (K)", default=298.15)
+        E  = E0 - (R_ * T_)/(n_ * F_) * math.log(Q_)
+        resultado_box("NERNST", [
+            f"E = {E0} - ({R_} × {T_}/({n_} × 96485)) × ln({Q_})",
+            f"E = {cor(f'{E:.4f} V', C.GREEN, C.BOLD)}",
+        ])
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CINÉTICA QUÍMICA
+# ─────────────────────────────────────────────────────────────────────────────
+def cinetica():
+    print(titulo("CINÉTICA QUÍMICA"))
+    print("  1. Velocidade Média              v = Δ[c] / Δt")
+    print("  2. Meia-vida 1ª Ordem             t½ = 0,693 / k")
+    print("  3. Meia-vida 2ª Ordem             t½ = 1 / (k·[A]₀)")
+    print("  4. Concentração em função de t")
+    print("  5. Van t Hoff (efeito temperatura) v₂/v₁ = Q^(ΔT/10)")
+    print("  6. Equação de Arrhenius           k = A·e^(-Ea/RT)")
+    print("  7. Tempo de reação (n meias-vidas)")
+    print("  8. Voltar")
+    R_ = 8.314
+    op = input_str("Escolha")
+
+    if op == "1":
+        print(subtitulo("v = Δ[c] / Δt"))
+        dc = input_num("Variação de concentração Δ[c] (mol/L)")
+        dt = input_num("Variação de tempo Δt (s)")
+        v = abs(dc)/dt
+        print(result("Velocidade média", f"{v:.6f}", "mol/L·s"))
+
+    elif op == "2":
+        print(subtitulo("Meia-vida 1ª Ordem  t½ = ln2 / k = 0,693 / k"))
+        k = input_num("Constante de velocidade k (s⁻¹) — ou vazio", allow_empty=True)
+        t12 = input_num("Meia-vida t½ (s) — ou vazio", allow_empty=True)
+        if k is None and t12 is not None: k = 0.693/t12; print(result("k", f"{k:.6f}", "s⁻¹"))
+        elif t12 is None and k is not None: t12 = 0.693/k; print(result("t½", f"{t12:.4f}", "s"))
+        else: print(err("Preencha apenas um campo."))
+
+    elif op == "3":
+        print(subtitulo("Meia-vida 2ª Ordem  t½ = 1/(k·[A]₀)"))
+        k = input_num("Constante de velocidade k (L/mol·s)")
+        A0 = input_num("[A]₀ — concentração inicial (mol/L)")
+        t12 = 1 / (k * A0)
+        print(result("t½", f"{t12:.4f}", "s"))
+
+    elif op == "4":
+        print(subtitulo("Concentração em função do tempo"))
+        print(f"  {cor('1.', C.CYAN)} 1ª ordem: [A] = [A]₀·e^(-kt)  ou  [A]₀·(1/2)^(t/t½)")
+        print(f"  {cor('2.', C.CYAN)} 2ª ordem: 1/[A] = 1/[A]₀ + kt")
+        print(f"  {cor('3.', C.CYAN)} 0ª ordem: [A] = [A]₀ - kt")
+        sub = input_str("Ordem")
+        A0 = input_num("[A]₀ (mol/L)")
+        k  = input_num("k (unidade da ordem)")
+        t_ = input_num("t (s)")
+        if sub == "1":
+            At = A0 * math.exp(-k*t_)
+            resultado_box("1ª ORDEM", [
+                f"[A] = {A0}·e^(-{k}·{t_})",
+                f"[A] = {cor(f'{At:.6f} mol/L', C.GREEN, C.BOLD)}",
+                f"Consumido: {cor(f'{A0-At:.6f} mol/L', C.RED)}  ({(1-At/A0)*100:.2f}%)",
+            ])
+        elif sub == "2":
+            At = 1 / (1/A0 + k*t_)
+            print(result("[A](t)", f"{At:.6f}", "mol/L"))
+        elif sub == "3":
+            At = max(0, A0 - k*t_)
+            print(result("[A](t)", f"{At:.6f}", "mol/L"))
+
+    elif op == "5":
+        print(subtitulo("Regra de Van't Hoff  v₂/v₁ = Q^(ΔT/10)"))
+        Q_ = input_num("Coeficiente Q (geralmente 2 ou 3)", default=2)
+        dT = input_num("ΔT (°C) = T₂ - T₁")
+        razao = Q_ ** (dT/10)
+        print(result("v₂/v₁", f"{razao:.4f}", "x"), info(f"A velocidade {'aumenta' if razao>1 else 'diminui'} {razao:.2f}x"))
+
+    elif op == "6":
+        print(subtitulo("Arrhenius  k = A·exp(-Ea/RT)"))
+        A_ = input_num("Fator pré-exponencial A")
+        Ea = input_num("Energia de ativação Ea (J/mol)")
+        T_ = input_num("Temperatura T (K)")
+        k  = A_ * math.exp(-Ea/(R_*T_))
+        print(result("k", f"{k:.4e}", "s⁻¹"))
+        # Comparação com dois T
+        print()
+        print(info("Calcular razão k₂/k₁ entre duas temperaturas:"))
+        T1 = input_num("T₁ (K)")
+        T2 = input_num("T₂ (K)")
+        razao = math.exp((-Ea/R_) * (1/T2 - 1/T1))
+        print(result("k₂/k₁", f"{razao:.4f}", "x"))
+
+    elif op == "7":
+        print(subtitulo("Quantidade restante após n meias-vidas"))
+        N0 = input_num("Quantidade inicial N₀")
+        t12 = input_num("Meia-vida t½")
+        t_ = input_num("Tempo total t")
+        n_mv = t_/t12
+        Nt = N0 * (0.5 ** n_mv)
+        resultado_box("DECAIMENTO POR MEIAS-VIDAS", [
+            f"Meias-vidas = {t_}/{t12} = {cor(f'{n_mv:.2f}', C.CYAN)}",
+            f"N(t) = {N0} × (1/2)^{n_mv:.2f}",
+            f"N(t) = {cor(f'{Nt:.4f}', C.GREEN, C.BOLD)}",
+            f"Restante = {cor(f'{Nt/N0*100:.2f}%', C.YELLOW)}",
+            f"Decaiu  = {cor(f'{(1-Nt/N0)*100:.2f}%', C.RED)}",
+        ])
+
+# ─────────────────────────────────────────────────────────────────────────────
+# EQUILÍBRIO QUÍMICO
+# ─────────────────────────────────────────────────────────────────────────────
+def equilibrio():
+    print(titulo("EQUILÍBRIO QUÍMICO"))
+    print("  1. Ebulioscopia (Elevação Ebulição)     ΔTe = Ke × i × m")
+    print("  2. Crioscopia (Abaixamento Fusão)        ΔTc = Kc × i × m")
+    print("  3. Osmoscopia (Pressão Osmótica)         π = MRT")
+    print("  4. Tonoscopia (Abaixamento de P. de Vapor)")
+    print("  5. Calcular Massa Molar por ebulioscopio/crioscopio")
+    print("  6. Fator i de Vant Hoff")
+    print("  7. Tabela de Constantes dos Solventes")
+    print("  8. Voltar")    
+    op = input_str("Escolha")
+
+    if op == "1":
+        print(subtitulo("Constante Kc"))
+        print(info("Insira concentrações e expoentes dos produtos e reagentes."))
+        try:
+            cp = [float(x) for x in input_str("[Produtos] (mol/L) separados por vírgula").split(",")]
+            ep = [float(x) for x in input_str("Expoentes dos produtos").split(",")]
+            cr = [float(x) for x in input_str("[Reagentes] (mol/L) separados por vírgula").split(",")]
+            er = [float(x) for x in input_str("Expoentes dos reagentes").split(",")]
+            num = 1
+            for c_, e_ in zip(cp, ep): num *= c_**e_
+            den = 1
+            for c_, e_ in zip(cr, er): den *= c_**e_
+            Kc = num/den
+            print(result("Kc", f"{Kc:.4e}"))
+            if Kc > 1: print(info("Kc > 1 → Equilíbrio favorece PRODUTOS"))
+            else:       print(info("Kc < 1 → Equilíbrio favorece REAGENTES"))
+        except: print(err("Erro de entrada."))
+
+    elif op == "2":
+        print(subtitulo("Kp = Kc × (RT)^Δn"))
+        Kc = input_num("Kc")
+        T_ = input_num("T (K)")
+        dn = input_num("Δn (mols gasosos: produtos - reagentes)")
+        R_ = 0.082
+        Kp = Kc * (R_*T_)**dn
+        print(result("Kp", f"{Kp:.4e}"))
+        Kc2 = input_num("Ou: converta Kp → Kc (Kp = ?)", allow_empty=True)
+        if Kc2 is not None:
+            Kc_calc = Kc2 / (R_*T_)**dn
+            print(result("Kc", f"{Kc_calc:.4e}"))
+
+    elif op == "3":
+        print(subtitulo("Grau de Dissociação α"))
+        ni  = input_num("Moles iniciais")
+        nd  = input_num("Moles dissociados no equilíbrio")
+        al  = nd/ni*100
+        print(result("α", f"{al:.2f}", "%"))
+
+    elif op == "4":
+        print(subtitulo("Tabela ICE  aA + bB ⇌ cC + dD"))
+        print(info("Kc simplificado — monoprotico. Deixe c_inicial dos produtos = 0"))
+        Kc = input_num("Kc da reação")
+        A0 = input_num("[A]₀ (mol/L) — concentração inicial")
+        # Simplificado para aA ⇌ cC
+        a_ = input_num("coef. de A (ex: 1)")
+        c_ = input_num("coef. de C (ex: 1 ou 2)")
+        # Kc = (c_*x)^c / (A0 - a_*x)^a  
+        print(info("Aproximação: x << A0 → Kc ≈ x^c / A0^a"))
+        try:
+            x = (Kc * A0**a_)**(1/c_)
+            A_eq = A0 - a_*x
+            C_eq = c_*x
+            resultado_box("ICE", [
+                f"x = {cor(f'{x:.6f}', C.CYAN)}",
+                f"[A]eq = {A0} - {a_}x = {cor(f'{A_eq:.4f} mol/L', C.GREEN)}",
+                f"[C]eq = {c_}x   = {cor(f'{C_eq:.4f} mol/L', C.GREEN)}",
+            ])
+        except: print(err("Não foi possível calcular. Tente Kc diferente."))
+
+    elif op == "5":
+        print(subtitulo("Princípio de Le Chatelier"))
+        print(f"  {cor(f'{'PERTURBAÇÃO':<40}', C.YELLOW)} {cor('DESLOCAMENTO', C.GREEN)}")
+        print("  " + "─" * 70)
+        print("  Adição de reagente                       → Favorece produção de PRODUTOS")
+        print("  Adição de produto                        → Favorece produção de REAGENTES")
+        print("  Remoção de reagente                      → Favorece produção de REAGENTES")
+        print("  Remoção de produto                       → Favorece produção de PRODUTOS")
+        print("  Aumento de pressão                       → Favorece o lado com MENOS mols gás")
+        print("  Diminuição de pressão                    → Favorece o lado com MAIS mols gás")
+        print("  Aumento de T (reação exotérmica ΔH<0)    → Favorece REAGENTES (K diminui)")
+        print("  Aumento de T (reação endotérmica ΔH>0)   → Favorece PRODUTOS  (K aumenta)")
+        print("  Diminuição de T (reação exotérmica)      → Favorece PRODUTOS  (K aumenta)")
+        print(f"  Catalisador adicionado                   → {cor('NÃO DESLOCA', C.RED)} (só acelera)")
+        print("  Gás inerte adicionado (V=cte)            → Sem efeito")
+        print("  Diluição (aumento de V)                  → Favorece lado com MAIS mols gás")
+# ─────────────────────────────────────────────────────────────────────────────
+# pH e pOH
+# ─────────────────────────────────────────────────────────────────────────────
+def ph_poh():
+    print(titulo("pH, pOH E EQUILÍBRIO IÔNICO"))
+    print("  1. pH a partir de [H⁺]         pH = -log[H⁺]")
+    print("  2. pOH a partir de [OH⁻]        pOH = -log[OH⁻]")
+    print("  3. [H⁺] a partir de pH")
+    print("  4. Ácido forte                  [H⁺] = Ca")
+    print("  5. Base forte                   [OH⁻] = Cb")
+    print("  6. Ácido fraco (Ka)             [H⁺] = √(Ka × Ca)")
+    print("  7. Base fraca (Kb)              [OH⁻] = √(Kb × Cb)")
+    print("  8. Solução tampão (Henderson)   pH = pKa + log([A⁻]/[HA])")
+    print("  9. Indicadores de pH")
+    print("  0. Voltar")
+    op = input_str("Escolha")
+    Kw = 1e-14
+
+    if op == "1":
+        H = input_num("[H⁺] (mol/L)")
+        pH = -math.log10(H)
+        pOH = 14 - pH
+        OH = 10**(-pOH)
+        resultado_box("pH", [
+            f"pH  = -log({H:.2e}) = {cor(f'{pH:.4f}', C.GREEN, C.BOLD)}",
+            f"pOH = 14 - {pH:.4f} = {cor(f'{pOH:.4f}', C.CYAN)}",
+            f"[OH⁻] = {cor(f'{OH:.2e} mol/L', C.BLUE)}",
+            f"Meio: {cor('ÁCIDO' if pH<7 else ('NEUTRO' if abs(pH-7)<0.01 else 'BÁSICO'), C.RED if pH<7 else (C.GRAY if abs(pH-7)<0.01 else C.BLUE))}",
+        ])
+    elif op == "2":
+        OH = input_num("[OH⁻] (mol/L)")
+        pOH = -math.log10(OH)
+        pH = 14 - pOH
+        resultado_box("pOH", [
+            f"pOH = -log({OH:.2e}) = {cor(f'{pOH:.4f}', C.GREEN, C.BOLD)}",
+            f"pH  = 14 - {pOH:.4f} = {cor(f'{pH:.4f}', C.CYAN)}",
+        ])
+    elif op == "3":
+        pH = input_num("pH")
+        H = 10**(-pH)
+        pOH = 14-pH
+        OH = 10**(-pOH)
+        resultado_box("[H⁺]", [
+            f"[H⁺]  = 10^(-{pH}) = {cor(f'{H:.4e} mol/L', C.GREEN, C.BOLD)}",
+            f"[OH⁻] = {cor(f'{OH:.4e} mol/L', C.CYAN)}",
+        ])
+    elif op == "4":
+        Ca = input_num("Concentração ácido forte Ca (mol/L)")
+        H = Ca
+        pH = -math.log10(H)
+        print(result("pH", f"{pH:.4f}"), info("[H⁺] = Ca para ácido forte monoprótico"))
+    elif op == "5":
+        Cb = input_num("Concentração base forte Cb (mol/L)")
+        OH = Cb
+        pOH = -math.log10(OH)
+        pH = 14-pOH
+        print(result("pH", f"{pH:.4f}"), info("[OH⁻] = Cb para base forte"))
+    elif op == "6":
+        Ca = input_num("Concentração ácido fraco Ca (mol/L)")
+        Ka = input_num("Constante Ka (ex: 1.8e-5 para CH3COOH)")
+        H = math.sqrt(Ka * Ca)
+        pH = -math.log10(H)
+        alpha = H/Ca*100
+        resultado_box("ÁCIDO FRACO", [
+            f"[H⁺] = √(Ka × Ca) = √({Ka:.2e} × {Ca})",
+            f"[H⁺] = {cor(f'{H:.4e} mol/L', C.GREEN, C.BOLD)}",
+            f"pH   = {cor(f'{pH:.4f}', C.GREEN)}",
+            f"α    = {cor(f'{alpha:.2f}%', C.CYAN)} (grau de ionização)",
+        ])
+    elif op == "7":
+        Cb = input_num("Concentração base fraca Cb (mol/L)")
+        Kb = input_num("Constante Kb (ex: 1.8e-5 para NH4OH)")
+        OH = math.sqrt(Kb * Cb)
+        pOH = -math.log10(OH)
+        pH = 14-pOH
+        resultado_box("BASE FRACA", [
+            f"[OH⁻] = {cor(f'{OH:.4e} mol/L', C.GREEN, C.BOLD)}",
+            f"pOH  = {cor(f'{pOH:.4f}', C.CYAN)}",
+            f"pH   = {cor(f'{pH:.4f}', C.GREEN)}",
+        ])
+    elif op == "8":
+        print(subtitulo("Henderson-Hasselbalch  pH = pKa + log([A⁻]/[HA])"))
+        Ka = input_num("Ka do ácido fraco")
+        A_  = input_num("[A⁻] — concentração da base conjugada (mol/L)")
+        HA  = input_num("[HA] — concentração do ácido fraco (mol/L)")
+        pKa = -math.log10(Ka)
+        pH  = pKa + math.log10(A_/HA)
+        print(result("pH", f"{pH:.4f}"), info(f"pKa = {pKa:.4f}"))
+    elif op == "9":
+        print(subtitulo("Indicadores de pH"))
+        indicadores = [
+            ("Azul de timol (ácido)",  "1,2", "1,2–2,8",  "vermelho → amarelo"),
+            ("Amarelo de metila",       "3,2", "2,9–4,0",  "vermelho → amarelo"),
+            ("Alaranjado de metila",    "3,5", "3,1–4,4",  "vermelho → amarelo"),
+            ("Vermelho de metila",      "5,1", "4,4–6,2",  "vermelho → amarelo"),
+            ("Azul de bromotimol",      "7,1", "6,0–7,6",  "amarelo → azul"),
+            ("Vermelho de fenol",       "7,9", "6,8–8,4",  "amarelo → vermelho"),
+            ("Azul de timol (base)",    "8,9", "8,0–9,6",  "amarelo → azul"),
+            ("Fenolftaleína",           "9,1", "8,2–10,0", "incolor → róseo"),
+            ("Tornassol",               "—",   "5,0–8,0",  "vermelho → azul"),
+            ("Alizarina amarela",       "—",   "10,1–12,0","amarelo → vermelho"),
+        ]
+        print(f"  {cor('Indicador', C.YELLOW):<35} {cor('pKind', C.GREEN):<8} {cor('Faixa', C.CYAN):<14} Transição")
+        separador()
+        for nome, pki, faixa, trans in indicadores:
+            print(f"  {cor(nome, C.WHITE):<43} {cor(pki, C.GREEN):<8} {cor(faixa, C.CYAN):<14} {cor(trans, C.GRAY)}")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PROPRIEDADES COLIGATIVAS
+# ─────────────────────────────────────────────────────────────────────────────
+SOLVENTES_COLIG = {
+    "Água":         {"Ke":0.512, "Kc":1.860, "pb":100.0,  "pf":0.0},
+    "Benzeno":      {"Ke":2.530, "Kc":5.120, "pb":80.1,   "pf":5.5},
+    "Clorofórmio":  {"Ke":3.630, "Kc":4.680, "pb":61.2,   "pf":-63.5},
+    "Ciclohexano":  {"Ke":2.790, "Kc":20.00, "pb":80.7,   "pf":6.5},
+    "Naftaleno":    {"Ke":5.650, "Kc":6.980, "pb":218.0,  "pf":80.2},
+    "Ácido acético":{"Ke":3.070, "Kc":3.900, "pb":118.1,  "pf":16.6},
+    "Cânfora":      {"Ke":5.950, "Kc":37.70, "pb":204.0,  "pf":178.8},
+}
+
+def coligativas():
+    print(titulo("PROPRIEDADES COLIGATIVAS"))
+    print("  1. Ebulioscopia (Elevação Ebulição)     ΔTe = Ke × i × m")
+    print("  2. Crioscopia (Abaixamento Fusão)        ΔTc = Kc × i × m")
+    print("  3. Osmoscopia (Pressão Osmótica)         π = MRT")
+    print("  4. Tonoscopia (Abaixamento de P. de Vapor)")
+    print("  5. Calcular Massa Molar por ebulioscopio/crioscopio")
+    print("  6. Fator i de Vant Hoff")
+    print("  7. Tabela de Constantes dos Solventes")
+    print("  8. Voltar")
+    op = input_str("Escolha")
+    R_ = 0.082
+
+    def get_molalidade():
+        ms = input_num("Massa de soluto (g)")
+        MM_ = input_num("Massa Molar do soluto (g/mol)")
+        mv = input_num("Massa de solvente (g)")
+        return (ms/MM_)/(mv/1000)
+
+    if op == "1":
+        print(subtitulo("Ebulioscopia  ΔTe = Ke × i × m"))
+        print(info("Solventes: Água Ke=0,512 | Benzeno Ke=2,53 | Clorofórmio Ke=3,63"))
+        Ke = input_num("Ke do solvente (°C·kg/mol)")
+        i_ = input_num("Fator de Van't Hoff i", default=1)
+        m_ = input_num("Molalidade m (mol/kg) — ou vazio para calcular", allow_empty=True)
+        if m_ is None: m_ = get_molalidade()
+        dTe = Ke * i_ * m_
+        pb  = input_num("Ponto de ebulição do solvente puro (°C) — vazio=pular", allow_empty=True)
+        resultado_box("EBULIOSCOPIA", [
+            f"ΔTe = {Ke} × {i_} × {m_:.4f}",
+            f"ΔTe = {cor(f'{dTe:.4f} °C', C.GREEN, C.BOLD)}",
+            f"Pe solução = {cor(f'{(pb+dTe):.2f} °C', C.YELLOW) if pb else cor('—', C.GRAY)}",
+        ])
+    elif op == "2":
+        print(subtitulo("Crioscopia  ΔTc = Kc × i × m"))
+        print(info("Água Kc=1,86 | Benzeno Kc=5,12 | Ciclohexano Kc=20,00 | Cânfora Kc=37,70"))
+        Kc_ = input_num("Kc do solvente")
+        i_  = input_num("Fator i", default=1)
+        m_  = input_num("Molalidade m (mol/kg) — ou vazio", allow_empty=True)
+        if m_ is None: m_ = get_molalidade()
+        dTc = Kc_ * i_ * m_
+        pf  = input_num("Pf do solvente puro (°C) — vazio=pular", allow_empty=True)
+        resultado_box("CRIOSCOPIA", [
+            f"ΔTc = {Kc_} × {i_} × {m_:.4f}",
+            f"ΔTc = {cor(f'{dTc:.4f} °C', C.GREEN, C.BOLD)}",
+            f"Pf solução = {cor(f'{(pf-dTc):.2f} °C', C.YELLOW) if pf else cor('—', C.GRAY)}",
+        ])
+    elif op == "3":
+        print(subtitulo("Pressão Osmótica  π = MRT"))
+        M_  = input_num("Molaridade M (mol/L)")
+        T_  = input_num("T (K)")
+        i_  = input_num("Fator i", default=1)
+        pi  = i_ * M_ * R_ * T_
+        print(result("π", f"{pi:.4f}", "atm"), info(f"= {pi*101.325:.2f} kPa"))
+    elif op == "4":
+        print(subtitulo("Tonoscopia  ΔP/P° = X_soluto"))
+        P0  = input_num("Pressão de vapor do solvente puro P° (mmHg ou Pa)")
+        X_s = input_num("Fração molar do soluto X_soluto")
+        dP  = P0 * X_s
+        print(result("ΔP (abaixamento)", f"{dP:.4f}"), info(f"P solução = {P0-dP:.4f}"))
+    elif op == "5":
+        print(subtitulo("Massa Molar por ebulioscopio/crioscopio"))
+        tipo = input_str("Ebuliosc.(e) ou Criosc.(c)?").lower()
+        K = input_num("Ke ou Kc do solvente")
+        dT = input_num("ΔTe ou ΔTc observado (°C)")
+        ms = input_num("Massa do soluto (g)")
+        mv = input_num("Massa do solvente (g)")
+        i_ = input_num("Fator i", default=1)
+        # m = dT/(K*i)  →  n/kg = dT/(K*i)  →  n = dT*mv/(K*i*1000)  →  MM = ms/n
+        m_ = dT/(K*i_)
+        n_ = m_ * (mv/1000)
+        MM_ = ms/n_
+        resultado_box("MASSA MOLAR", [
+            f"m = ΔT/(K×i) = {dT}/({K}×{i_}) = {cor(f'{m_:.4f} mol/kg', C.CYAN)}",
+            f"n = m × kg_solvente = {m_:.4f} × {mv/1000} = {cor(f'{n_:.4f} mol', C.CYAN)}",
+            f"MM = ms/n = {ms}/{n_:.4f} = {cor(f'{MM_:.2f} g/mol', C.GREEN, C.BOLD)}",
+        ])
+    elif op == "6":
+        print(subtitulo("Fator de Van't Hoff  i = 1 + (n-1)·α"))
+        
+# ─────────────────────────────────────────────────────────────────────────────
+# RADIOATIVIDADE
+# ─────────────────────────────────────────────────────────────────────────────
+def radioatividade():
+    print(titulo("RADIOATIVIDADE"))
+    print("  1. Decaimento Radioativo     N(t) = N₀·(1/2)^(t/t½)")
+    print("  2. Constante de Desintegração  λ = ln2/t½")
+    print("  3. Atividade                 A = λ·N")
+    print("  4. Balancear equação de desintegração")
+    print("  5. Energia de Fissão (E = mc²)")
+    print("  6. Tabela de Meias-Vidas Comuns")
+    print("  7. Voltar")
+    op = input_str("Escolha")
+    c_ = 3e8  # m/s
+
+    if op == "1":
+        print(subtitulo("N(t) = N₀ × (1/2)^(t/t½)"))
+        N0  = input_num("N₀ (quantidade inicial)")
+        t12 = input_num("Meia-vida t½ (mesma unidade de t)")
+        t_  = input_num("Tempo t")
+        n_  = t_/t12
+        Nt  = N0 * (0.5**n_)
+        lam = math.log(2)/t12
+        resultado_box("DECAIMENTO", [
+            f"n(meias-vidas) = {t_}/{t12} = {cor(f'{n_:.3f}', C.CYAN)}",
+            f"λ = ln2/t½ = {cor(f'{lam:.6e} 1/unidade', C.CYAN)}",
+            f"N(t) = {N0} × 0,5^{n_:.3f}",
+            f"N(t) = {cor(f'{Nt:.4f}', C.GREEN, C.BOLD)}",
+            f"Decaiu = {cor(f'{N0-Nt:.4f}', C.RED)} ({(1-Nt/N0)*100:.2f}%)",
+            f"Restante = {cor(f'{Nt/N0*100:.2f}%', C.YELLOW)}",
+        ])
+    elif op == "2":
+        t12 = input_num("Meia-vida t½")
+        lam = math.log(2)/t12
+        print(result("λ", f"{lam:.6e}", "1/unidade de tempo"))
+    elif op == "3":
+        print(subtitulo("Atividade  A = λ·N"))
+        lam = input_num("λ (1/s)")
+        N   = input_num("N (número de átomos)")
+        A   = lam * N
+        print(result("Atividade A", f"{A:.4e}", "Bq (decaimentos/s)"), info(f"= {A/3.7e10:.4e} Ci (curie)"))
+    elif op == "4":
+        print(subtitulo("Equação de Desintegração Nuclear"))
+        print('  Regras:')
+        print(f"    {cor('α (alfa):', C.GREEN)} emite ₂⁴He  →  Z-2, A-4")
+        print(f"    {cor('β⁻ (beta menos):', C.YELLOW)} emite e⁻    →  Z+1, A=A")
+        print(f"    {cor('β⁺ (beta mais):', C.CYAN)} emite e⁺     →  Z-1, A=A")
+        print(f"    {cor('γ (gama):', C.MAGENTA)} emite γ         →  Z=Z, A=A")
+        print(f"    {cor('Captura eletrônica:', C.BLUE)} →  Z-1, A=A")
+        print(f"    {cor('Emissão de nêutron:', C.RED)} →  Z=Z, A-1")
+        Z_pai = int(input_num("Z do núcleo-pai"))
+        A_pai = int(input_num("A do núcleo-pai"))
+        tipo_ = input_str("Tipo: alfa/beta-/beta+/gama/CE/neutron")
+        if tipo_.lower()=="alfa":
+            Z_f=Z_pai-2; A_f=A_pai-4; rem="₂⁴He"
+        elif tipo_.lower()=="beta-":
+            Z_f=Z_pai+1; A_f=A_pai; rem="e⁻ + ν̄"
+        elif tipo_.lower()=="beta+":
+            Z_f=Z_pai-1; A_f=A_pai; rem="e⁺ + ν"
+        elif tipo_.lower()=="gama":
+            Z_f=Z_pai; A_f=A_pai; rem="γ"
+        elif tipo_.lower()=="ce":
+            Z_f=Z_pai-1; A_f=A_pai; rem="+ e⁻ capturado → ν"
+        elif tipo_.lower()=="neutron":
+            Z_f=Z_pai; A_f=A_pai-1; rem="n"
+        else: print(err("Tipo inválido.")); return
+        el_pai = ELEMENTOS.get(Z_pai, {}).get("sym","?")
+        el_filho = ELEMENTOS.get(Z_f, {}).get("sym","?")
+        print(f"\n  {cor(f'₍{Z_pai}₎{el_pai}({A_pai})', C.GREEN, C.BOLD)}  →  {cor(f'₍{Z_f}₎{el_filho}({A_f})', C.YELLOW, C.BOLD)}  +  {cor(rem, C.CYAN)}")
+        print(info(f"Filho: {ELEMENTOS.get(Z_f,{}).get('nome','Desconhecido')} (Z={Z_f}, A={A_f})"))
+
+    elif op == "5":
+        print(subtitulo("Energia de Fissão  E = Δm × c²"))
+        dm = input_num("Defeito de massa Δm (kg ou u — 1u=1,66054e-27 kg)")
+        unid = input_str("Unidade (kg/u)").lower()
+        if unid == "u": dm *= 1.66054e-27
+        E = dm * c_**2
+        print(result("E", f"{E:.4e}", "J"), info(f"= {E/1.602e-13:.4e} MeV"))
+
+    elif op == "6":
+        print(subtitulo("Meias-Vidas de Isótopos Comuns"))
+        dados = [
+            ("¹H (prótio)","estável","—"),
+            ("¹⁴C","5.730 anos","β⁻  — datação carbono"),
+            ("¹⁸F","109,8 min","β⁺  — PET scan"),
+            ("²⁶Al","720.000 anos","β⁺  — cosmogeoquímica"),
+            ("³H (trítio)","12,32 anos","β⁻  — fusão nuclear"),
+            ("⁶⁰Co","5,27 anos","β⁻,γ — radioterapia"),
+            ("⁸⁵Kr","10,76 anos","β⁻  — dating atmosférico"),
+            ("⁹⁰Sr","28,9 anos","β⁻  — produto de fissão"),
+            ("⁹⁹mTc","6,01 horas","γ   — diagnóstico nuclear"),
+            ("¹³¹I","8,02 dias","β⁻,γ — tireoide"),
+            ("¹³⁷Cs","30,17 anos","β⁻  — produto de fissão (Chernobyl)"),
+            ("²²⁶Ra","1.600 anos","α   — Marie Curie"),
+            ("²³⁵U","703,8 M anos","α   — fissão (reatores/armas)"),
+            ("²³⁸U","4,468 G anos","α   — mais abundante"),
+            ("²³⁹Pu","24.110 anos","α   — armas/MOX"),
+            ("²⁴¹Am","432,2 anos","α,γ — detector de fumaça"),
+        ]
+        print(f"  {cor('Isótopo', C.YELLOW):<20} {cor('Meia-vida', C.GREEN):<20} Uso/Observação")
+        separador()
+        for iso, t12, obs in dados:
+            print(f"  {cor(iso, C.CYAN):<28} {cor(t12, C.GREEN):<20} {cor(obs, C.GRAY)}")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# FUNÇÕES ORGÂNICAS
+# ─────────────────────────────────────────────────────────────────────────────
+def organica():
+    print(titulo("QUÍMICA ORGÂNICA"))
+    print("  1. Identificar Função Orgânica (por grupo funcional)")
+    print("  2. Grau de Insaturação (GI)")
+    print("  3. Isomeria — tipos")
+    print("  4. Reações Orgânicas Principais")
+    print("  5. Séries Homólogas (alcanos, álcoois, etc.)")
+    print("  6. Nomenclatura IUPAC — regras")
+    print("  7. Voltar")
+    op = input_str("Escolha")
+
+    if op == "1":
+        print(subtitulo("Identificação de Função Orgânica"))
+        formula = input_str("Digite a fórmula ou nome (ex: CH3COOH, C6H5OH, CH3CHO)").upper()
+        funcao = "Hidrocarboneto"
+        desc = ""
+        if "COOH" in formula:
+            funcao = "Ácido Carboxílico"; desc = "Grupo -COOH (carboxila): H-C=O e -OH na mesma extremidade"
+        elif "COO" in formula and "COOH" not in formula:
+            funcao = "Éster"; desc = "Grupo -COO- (carbonila + oxigênio): RC(=O)OR'"
+        elif "CHO" in formula or "COH" in formula:
+            funcao = "Aldeído"; desc = "Grupo -CHO: carbonila na extremidade da cadeia"
+        elif "CO" in formula and "COOH" not in formula and "COO" not in formula:
+            funcao = "Cetona"; desc = "Grupo C=O no interior da cadeia carbônica"
+        elif "C6H5OH" in formula or ("OH" in formula and ("C6H5" in formula or "PH" in formula)):
+            funcao = "Fenol"; desc = "Grupo -OH ligado diretamente a anel benzênico"
+        elif "OH" in formula:
+            funcao = "Álcool"; desc = "Grupo -OH (hidroxila) em carbono alifático"
+        elif "NH2" in formula or "NH" in formula:
+            funcao = "Amina"; desc = "Grupo amino -NH₂, -NHR ou -NR₂"
+        elif "CONH" in formula or "CONHR" in formula:
+            funcao = "Amida"; desc = "Grupo -CO-NH₂"
+        elif "CN" in formula:
+            funcao = "Nitrila (Nitrilo)"; desc = "Grupo -C≡N"
+        elif "NO2" in formula:
+            funcao = "Nitrocomposto"; desc = "Grupo -NO₂ (nitro)"
+        elif re.search(r'[FCLBRI]', formula.replace("COOH","").replace("COO","").replace("CHO","")):
+            funcao = "Haleto Orgânico (Halogênio)"; desc = "Halogênio (F, Cl, Br, I) ligado a carbono"
+        elif formula.count("O") == 1 and "OH" not in formula and "CO" not in formula:
+            funcao = "Éter"; desc = "Grupo -O- (oxigênio entre dois carbonos): R-O-R'"
+        resultado_box("FUNÇÃO ORGÂNICA", [
+            f"Fórmula: {cor(formula, C.CYAN)}",
+            f"Função:  {cor(funcao, C.GREEN, C.BOLD)}",
+            f"{cor(desc, C.GRAY)}",
+        ])
+
+    elif op == "2":
+        print(subtitulo("Grau de Insaturação  GI = (2C + 2 + N - H - X) / 2"))
+        print(info("Para compostos com O: O não interfere na fórmula"))
+        C_ = input_num("Número de carbonos C")
+        H_ = input_num("Número de hidrogênios H")
+        N_ = input_num("Número de nitrogênios N", default=0)
+        X_ = input_num("Número de halogênios X (F,Cl,Br,I)", default=0)
+        GI = (2*C_ + 2 + N_ - H_ - X_) / 2
+        interp = ""
+        if GI == 0:   interp = "Alcano (cadeia saturada)"
+        elif GI == 1: interp = "1 dupla C=C (alceno) ou 1 ciclo"
+        elif GI == 2: interp = "2 duplas ou 1 tripla C≡C (alcino) ou combinações"
+        elif GI == 3: interp = "3 insaturações (ex: ciclodieno ou alcadiino)"
+        elif GI == 4: interp = "Anel benzênico (3 duplas + 1 ciclo)"
+        elif GI >= 5: interp = f"Estrutura altamente insaturada/policíclica"
+        resultado_box("GRAU DE INSATURAÇÃO", [
+            f"GI = (2×{int(C_)} + 2 + {int(N_)} - {int(H_)} - {int(X_)}) / 2",
+            f"GI = {cor(str(int(GI) if GI==int(GI) else GI), C.GREEN, C.BOLD)}",
+            f"{cor(interp, C.YELLOW)}",
+        ])
+
+    elif op == "3":
+        print(subtitulo("Tipos de Isomeria"))
+        print(
+  'ISOMERIA PLANA (Constitucional):',
+  '┌─────────────────────────────────────────────────────────────────┐',
+  '│ Cadeia       — mesma fórmula, esqueleto diferente               │',
+  '│               ex: butano (reta) ↔ isobutano (ramificado)        │',
+  '│ Posição      — mesmo grupo funcional, posição diferente         │',
+  '│               ex: 1-butanol ↔ 2-butanol                         │',
+  '│ Função       — grupos funcionais diferentes                     │',
+  '│               ex: ácido acético ↔ formiato de metila            │',
+  '│ Metameria    — mesma função, posição do heteroátomo diferente   │',
+  '│               ex: éter etílico ↔ éter metilpropílico            │',
+  '│ Tautomeria   — equilíbrio dinâmico (ex: ceto-enólica)           │',
+  '└─────────────────────────────────────────────────────────────────┘',
+
+  'ISOMERIA ESPACIAL (Estereoisomeria):',
+  '┌─────────────────────────────────────────────────────────────────┐',
+  '│ Geométrica (cis-trans) — dupla ligação C=C ou ciclo rígido      │',
+  '│   cis: grupos iguais no mesmo lado                              │',
+  '│   trans: grupos iguais em lados opostos                         │',
+  '│ Óptica (Quiral)       — carbono assimétrico (4 grupos distintos)│',
+  '│   Enantiômeros: não sobreponíveis como mão esquerda/direita     │',
+  '│   Diastereoisômeros: múltiplos carbonos assimétricos            │',
+  '└─────────────────────────────────────────────────────────────────┘'
+      )
+
+    elif op == "4":
+        print(subtitulo("Principais Reações Orgânicas"))
+        reacoes = [
+            ("Halogenação (substituição)",   "R-H + X₂ → R-X + HX  (luz UV ou calor)"),
+            ("Adição em alceno",             "C=C + H₂ → C-C  (catalisador Ni/Pt/Pd)"),
+            ("Hidratação (adição H₂O)",      "C=C + H₂O → álcool  (H⁺ catalisador)"),
+            ("Hidrohalogenação",             "C=C + HX → haleto  (Markovnikov)"),
+            ("Oxidação de álcool primário",  "R-CH₂-OH → R-CHO → R-COOH"),
+            ("Oxidação álcool secundário",   "R-CHOH-R' → R-CO-R' (cetona)"),
+            ("Esterificação de Fischer",     "R-COOH + R'-OH ⇌ R-COOR' + H₂O  (H⁺)"),
+            ("Saponificação",                "R-COOR' + NaOH → R-COONa + R'OH"),
+            ("Amidação",                     "R-COOH + R'-NH₂ → R-CO-NH-R' + H₂O"),
+            ("Polimerização por adição",     "n CH₂=CH₂ → -(CH₂-CH₂)ₙ-  (polietileno)"),
+            ("Polimerização por condensação","n HO-R-COOH → poliéster + n H₂O"),
+            ("Combustão completa",           "CₓHᵧ + O₂ → CO₂ + H₂O  (ΔH < 0)"),
+            ("Fermentação alcoólica",        "C₆H₁₂O₆ → 2 C₂H₅OH + 2 CO₂  (leveduras)"),
+            ("Cracking (pirólise)",          "Alcano longo → alcenos + H₂  (calor)"),
+            ("Diazotação",                   "R-NH₂ + HNO₂ → R-N₂⁺ + H₂O  (0-5°C)"),
+            ("Nitração",                     "ArH + HNO₃ → ArNO₂ + H₂O  (H₂SO₄ conc.)"),
+        ]
+        for nome, eq in reacoes:
+            texto_alinhado = f"{nome + ' :':<50}"
+            print(f"  {cor(texto_alinhado, C.CYAN)} {cor(eq, C.GRAY)}")
+
+    elif op == "5":
+        print(subtitulo("Séries Homólogas"))
+        series = {
+            "Alcanos (CₙH₂ₙ₊₂)": ["metano CH4","etano C2H6","propano C3H8","butano C4H10","pentano C5H12","hexano C6H14","heptano C7H16","octano C8H18","nonano C9H20","decano C10H22"],
+            "Alcenos (CₙH₂ₙ)":    ["eteno C2H4","propeno C3H6","1-buteno C4H8","1-penteno C5H10"],
+            "Alcinos (CₙH₂ₙ₋₂)":  ["etino C2H2","propino C3H4","1-butino C4H6"],
+            "Álcoois (CₙH₂ₙ₊₂O)": ["metanol CH3OH","etanol C2H5OH","1-propanol C3H7OH","1-butanol C4H9OH"],
+            "Ácidos (CₙH₂ₙO₂)":   ["fórmico HCOOH","acético CH3COOH","propanoico C2H5COOH","butanoico C3H7COOH"],
+        }
+        for serie, mem in series.items():
+            print(f"\n  {cor(serie, C.YELLOW)}")
+            print("  " + "  |  ".join(cor(m, C.CYAN) for m in mem))
+
+    elif op == "6":
+        print(subtitulo("Nomenclatura IUPAC — Regras Gerais"))
+        print(
+  {cor('1.', C.GREEN)} ,'Identificar a cadeia principal (mais longa com o grupo prioritário)',
+  {cor('2.', C.GREEN)} ,'Numerar a cadeia (menor número ao grupo prioritário ou à ramificação)',
+  {cor('3.', C.GREEN)} ,'Nomear: prefixo(carbonos) + infixo(saturação) + sufixo(função)',
+
+  {cor('Prefixos (carbonos):', C.YELLOW)}  ,'met(1) et(2) prop(3) but(4) pent(5) hex(6) hept(7) oct(8) non(9) dec(10)',
+  {cor('Infixos:', C.YELLOW)}              ,'-an-(saturado) -en-(dupla) -in-(tripla)',
+  {cor('Sufixos por função:', C.YELLOW)},
+    'Alcano:   -ano  | Alceno: -eno  | Alcino: -ino',
+    'Álcool:   -ol   | Éter: -oxido (prefixo)',
+    'Aldeído:  -al   | Cetona: -ona',
+    'Ác. carboxílico: -oico',
+    'Éster: alquilanoato  | Amina: -amina  | Amida: -amida',
+
+  {cor('Prioridade de funções:', C.YELLOW)},
+    'Ác. carboxílico > Anidrido > Éster > Amida > Aldeído > Cetona > Álcool > Amina > Alceno > Alcino > Alcano'
+        )
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TABELA PERIÓDICA (modo texto)
+# ─────────────────────────────────────────────────────────────────────────────
+def tabela_periodica_menu():
+    print(titulo("TABELA PERIÓDICA"))
+    print("  1. Buscar elemento (por nome, símbolo ou número atômico)")
+    print("  2. Listar todos os elementos")
+    print("  3. Listar por categoria")
+    print("  4. Calcular Massa Molar de composto")
+    print("  5. Comparar dois elementos")
+    print("  6. Voltar")
+    op = input_str("Escolha")
+
+    if op == "1":
+        q = input_str("Nome, símbolo ou número atômico")
+        el = buscar_elemento(q)
+        if el:
+            exibir_elemento(el)
+        else:
+            print(err(f"Elemento '{q}' não encontrado."))
+
+    elif op == "2":
+        print(subtitulo("Todos os 118 Elementos"))
+        print(f"  {'Z':>4}  {'Sim':<5} {'Nome':<20} {'MM':>8}  {'Cat':<25} {'Período':<8} {'Grupo'}")
+        separador()
+        for z, el in ELEMENTOS.items():
+            g = str(el['grupo']) if el['grupo'] else "—"
+            print(f"  {cor(str(z).rjust(3), C.CYAN)}  {cor(el['sym']+'  ', C.GREEN, C.BOLD):<11} {el['nome']:<20} {cor(str(el['massa']).rjust(8), C.YELLOW)}  {el['cat']:<25} {el['periodo']:<8} {g}")
+            if z % 20 == 0:
+                if input_str("  [ENTER=continuar, q=sair]") == 'q': break
+
+    elif op == "3":
+        cats = list(set(v["cat"] for v in ELEMENTOS.values()))
+        cats.sort()
+        for i, c_ in enumerate(cats):
+            print(f"  {cor(str(i+1), C.CYAN)}. {c_}")
+        idx = int(input_num("Número da categoria")) - 1
+        cat = cats[idx]
+        print(subtitulo(f"Elementos: {cat}"))
+        for z, el in ELEMENTOS.items():
+            if el["cat"] == cat:
+                print(f"  {cor(str(z).rjust(3), C.GRAY)} {cor(el['sym']+'  ', C.GREEN, C.BOLD):<10} {el['nome']:<22} {el['massa']}")
+
+    elif op == "4":
+        print(subtitulo("Calculadora de Massa Molar"))
+        print(info("Ex: H2O, NaCl, Ca(OH)2, H2SO4, C6H12O6"))
+        formula = input_str("Fórmula química")
+        mm = calcular_massa_molar(formula)
+        if mm > 0:
+            print(result(f"MM({formula})", f"{mm:.4f}", "g/mol"))
+        else:
+            print(err("Não foi possível calcular. Verifique a fórmula."))
+
+    elif op == "5":
+        print(subtitulo("Comparar Dois Elementos"))
+        e1 = buscar_elemento(input_str("Primeiro elemento"))
+        e2 = buscar_elemento(input_str("Segundo elemento"))
+        if not e1 or not e2:
+            print(err("Elemento não encontrado.")); return
+        props = ["massa","en","raio","pe","pf","dens"]
+        labels = ["Massa atômica","Eletroneg.","Raio atômico","P. ebulição","P. fusão","Densidade"]
+        print(f"\n  {'Propriedade':<25} {cor(e1['sym']+' ('+e1['nome'][:10]+')', C.GREEN):<30} {cor(e2['sym']+' ('+e2['nome'][:10]+')', C.CYAN)}")
+        separador()
+        for p, l in zip(props, labels):
+            v1 = str(e1.get(p,"—"))
+            v2 = str(e2.get(p,"—"))
+            print(f"  {l:<25} {v1:<30} {v2}")
+
+def calcular_massa_molar(formula: str) -> float:
+    """Parse simples de fórmula química e calcula massa molar."""
+    def parse(f, idx=0):
+        total = 0.0
+        while idx < len(f):
+            if f[idx] == '(':
+                sub, idx = parse(f, idx+1)
+                num = 0
+                while idx < len(f) and f[idx].isdigit():
+                    num = num*10 + int(f[idx]); idx += 1
+                total += sub * (num if num else 1)
+            elif f[idx] == ')':
+                return total, idx+1
+            elif f[idx].isupper():
+                sym = f[idx]; idx += 1
+                while idx < len(f) and f[idx].islower():
+                    sym += f[idx]; idx += 1
+                num = 0
+                while idx < len(f) and f[idx].isdigit():
+                    num = num*10 + int(f[idx]); idx += 1
+                count = num if num else 1
+                el = buscar_elemento(sym)
+                if el: total += el['massa'] * count
+                else: return -1, idx
+            else:
+                idx += 1
+        return total, idx
+    mm, _ = parse(formula)
+    return mm
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MENU PRINCIPAL
+# ─────────────────────────────────────────────────────────────────────────────
+def menu_principal():
+    while True:
+        limpar()
+        print(
+' ╔══════════════════════════════════════════════════════════════════════════╗\n',
+'║        ⚗  ASSISTENTE DE QUÍMICA — ENSINO MÉDIO COMPLETO                  ║\n',
+'║       118 Elementos · Todas as Fórmulas · Cálculos Automáticos           ║\n',
+'╚══════════════════════════════════════════════════════════════════════════╝\n',
+
+  '── TABELA PERIÓDICA ──────────────────────────────────\n',
+  ' 1.' 'Tabela Periódica (118 elementos, busca, massa molar)\n',
+'\n'
+  '── REAÇÕES ───────────────────────────────────────────\n',
+  ' 2.''Neutralização Ácido-Base (balanceamento automático)\n',
+'\n'
+  '── CÁLCULOS DE SOLUÇÃO ───────────────────────────────\n',
+  ' 3.' 'Concentração (comum, molar, diluição, título, mistura)\n',
+  ' 4.''Solubilidade (CS, tipo solução, Kps)\n',
+'\n'
+  '── ESTEQUIOMETRIA E GASES ────────────────────────────\n',
+  ' 5.''Estequiometria (estequio, lim., rendimento, mol/massa)\n',
+  ' 6.''Gases (Boyle, Charles, Gay-Lussac, Clapeyron, Dalton)\n',
+'\n'
+  '── ENERGIA E CINÉTICA ────────────────────────────────\n',
+  ' 7.' 'Termoquímica (calorimetria, Hess, E.Ligação, Gibbs)\n',
+  ' 8.' 'Eletroquímica (pilha, Faraday, Nernst)\n',
+  ' 9.''Cinética Química (velocidade, meia-vida, Arrhenius)\n',
+  '10.''Equilíbrio Químico (Kc, Kp, Le Chatelier, ICE)\n',
+'\n'
+  '── pH E OUTRAS PROPRIEDADES ──────────────────────────'
+  'pH e pOH (forte/fraco, Ka/Kb, tampão, indicadores)\n',
+  'Propriedades Coligativas (ebulioscopia, crioscopia…)\n',
+'\n'
+  '── TÓPICOS ESPECIAIS ─────────────────────────────────\n',
+  'Radioatividade (decaimento, Faraday, fissão)\n',
+  'Química Orgânica (funções, GI, isomeria, reações)\n',
+'\n'
+  ' 0.''Sair'
+        )
+        op = input_str("Escolha uma opção")
+
+        dispatch = {
+            "1": tabela_periodica_menu,
+            "2": neutralizacao,
+            "3": concentracao,
+            "4": solubilidade,
+            "5": estequiometria,
+            "6": gases,
+            "7": termoquimica,
+            "8": eletroquimica,
+            "9": cinetica,
+            "10": equilibrio,
+            "11": ph_poh,
+            "12": coligativas,
+            "13": radioatividade,
+            "14": organica,
+        }
+
+        if op == "0":
+            print(f"\n  {cor('Até logo! Bons estudos de Química! ⚗', C.CYAN, C.BOLD)}\n")
+            sys.exit(0)
+        elif op in dispatch:
+            try:
+                dispatch[op]()
+                pausar()
+            except KeyboardInterrupt:
+                pass
+            except Exception as e:
+                print(err(f"Erro: {e}"))
+                pausar()
+        else:
+            print(err("Opção inválida."))
+            pausar()
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MAIN
+# ─────────────────────────────────────────────────────────────────────────────
+if __name__ == "__main__":
+    try:
+        menu_principal()
+    except KeyboardInterrupt:
+        print(f"\n\n  {cor('Programa encerrado.', C.GRAY)}\n")
+        sys.exit(0)
